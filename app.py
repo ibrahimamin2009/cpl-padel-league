@@ -1968,12 +1968,12 @@ def init_db():
             admin = User.query.filter_by(is_admin=True).first()
             if not admin:
                 admin = User(
-                    team_name='Admin',
+                    team_name='admin',
                     player1_name='Administrator',
                     player1_email='admin@cpl.com',
                     player2_name='Admin',
                     player2_email='admin@cpl.com',
-                    password_hash='admin123',
+                    password_hash=generate_password_hash('admin'),
                     is_admin=True,
                     rank=0,
                     tier='Admin',
@@ -1987,8 +1987,7 @@ def init_db():
         except Exception as e:
             print(f"❌ Database initialization error: {e}")
 
-# Initialize database when app starts
-init_db()
+# Database initialization is handled by Railway deployment scripts
 
 # Email notification functions
 def send_email_notification(recipient_email, subject, body):
