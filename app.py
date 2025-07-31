@@ -440,27 +440,33 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        team_name = request.form.get('team_name')
-        password = request.form.get('password')
-        
-        user = User.query.filter_by(team_name=team_name).first()
-        
-        if user and user.password_hash == password:  # Simple password check
-            if user.status == 'pending':
-                flash('Your account is pending admin approval. Please wait for approval before logging in.', 'error')
-                return render_template('login.html')
-            elif user.status == 'inactive':
-                flash('Your account has been rejected or deactivated. Please contact admin for assistance.', 'error')
-                return render_template('login.html')
+    try:
+        if request.method == 'POST':
+            team_name = request.form.get('team_name')
+            password = request.form.get('password')
             
-            session['user_id'] = user.id
-            flash('Login successful!', 'success')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid team name or password.', 'error')
-    
-    return render_template('login.html')
+            user = User.query.filter_by(team_name=team_name).first()
+            
+            # Check if user exists and password matches (simple check for now)
+            if user and user.password_hash == password:
+                if user.status == 'pending':
+                    flash('Your account is pending admin approval. Please wait for approval before logging in.', 'error')
+                    return render_template('login.html')
+                elif user.status == 'inactive':
+                    flash('Your account has been rejected or deactivated. Please contact admin for assistance.', 'error')
+                    return render_template('login.html')
+                
+                session['user_id'] = user.id
+                flash('Login successful!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid team name or password.', 'error')
+        
+        return render_template('login.html')
+    except Exception as e:
+        print(f"Login error: {e}")
+        flash('An error occurred during login. Please try again.', 'error')
+        return render_template('login.html')
 
 @app.route('/logout')
 def logout():
@@ -523,15 +529,16 @@ def register():
 
 @app.route('/dashboard')
 def dashboard():
-    current_user = get_current_user()
-    
-    # Run time limit checks
-    expired_challenges = check_challenge_expiration()
-    overdue_matches = check_match_deadlines()
-    overdue_scores = check_score_deadlines()
-    demoted_teams = check_forfeit_demotions()
-    
-    if current_user:
+    try:
+        current_user = get_current_user()
+        
+        # Run time limit checks
+        expired_challenges = check_challenge_expiration()
+        overdue_matches = check_match_deadlines()
+        overdue_scores = check_score_deadlines()
+        demoted_teams = check_forfeit_demotions()
+        
+        if current_user:
         # User-specific dashboard
         matches_played = Match.query.filter(
             ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id)) &
@@ -1885,7 +1892,17 @@ def create_tables():
         # Update tiers for all existing teams
         update_all_tiers()
 
+# Initialize database tables
+def init_db():
+    with app.app_context():
+        db.create_all()
+        # Initialize default tier configuration
+        initialize_default_tiers()
+        # Update tiers for all existing teams
+        update_all_tiers()
+        print("✅ Database initialized successfully!")
+
 if __name__ == '__main__':
-    create_tables()
+    init_db()
     port = int(os.environ.get('PORT', 8000))
     app.run(debug=False, host='0.0.0.0', port=port)
