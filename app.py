@@ -584,8 +584,11 @@ def dashboard():
                                  pending_challenges=pending_challenges)
         else:
             # Public dashboard
-            total_teams = User.query.count()
-            active_teams = User.query.filter_by(status='active').count()
+            total_teams = User.query.filter(User.is_admin == False).count()
+            active_teams = User.query.filter(
+                (User.status == 'active') & 
+                (User.is_admin == False)
+            ).count()
             recent_matches = Match.query.order_by(Match.created_at.desc()).limit(5).all()
             pending_challenges = Challenge.query.filter_by(status='pending').all()
             
@@ -604,8 +607,11 @@ def analytics():
     current_user = get_current_user()
     
     # Overall statistics
-    total_teams = User.query.count()
-    active_teams = User.query.filter_by(status='active').count()
+    total_teams = User.query.filter(User.is_admin == False).count()
+    active_teams = User.query.filter(
+        (User.status == 'active') & 
+        (User.is_admin == False)
+    ).count()
     total_matches = Match.query.count()
     played_matches = Match.query.filter_by(status='confirmed').count()
     
@@ -1042,14 +1048,14 @@ def enter_score(match_id):
         match.score_entered_by = current_user.id
         match.score_approved = None  # Pending approval
         match.status = 'played'  # Changed from 'confirmed' to 'played'
-        match.score_deadline = datetime.now(LAHORE_TZ) + timedelta(hours=5)
+        match.score_deadline = datetime.now(LAHORE_TZ) + timedelta(minutes=30)
         
         db.session.commit()
         
         # Send email notification
         send_score_entry_notification(match)
         
-        flash('Score entered successfully! Waiting for opponent approval. You have 5 hours to approve the score.', 'success')
+        flash('Score entered successfully! Waiting for opponent approval. You have 30 minutes to approve the score.', 'success')
         return redirect(url_for('matches'))
     
     return render_template('enter_score.html', match=match, current_user=current_user)
