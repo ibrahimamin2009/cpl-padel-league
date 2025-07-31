@@ -755,6 +755,30 @@ body {
         display: none;
     }
     
+    /* Hide all navigation links on mobile */
+    .nav-menu li {
+        display: none;
+    }
+    
+    /* Hide the entire nav menu on mobile */
+    .nav-menu {
+        display: none !important;
+    }
+    
+    /* Only show hamburger menu on mobile */
+    .mobile-nav-toggle {
+        display: block !important;
+    }
+    
+    /* Show nav menu only when mobile-active class is present */
+    .nav-menu.mobile-active {
+        display: flex !important;
+    }
+    
+    .nav-menu.mobile-active li {
+        display: block;
+    }
+    
     /* Mobile Navigation */
     .mobile-nav-toggle {
         display: block !important;
