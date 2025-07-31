@@ -32,8 +32,8 @@ if [ ! -f ".env" ]; then
     echo "Creating .env file..."
     cat > .env << EOF
 SECRET_KEY=your-secret-key-change-in-production
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+MAIL_USERNAME=ibrahimamin9621@gmail.com
+MAIL_PASSWORD=Pakistan1049!
 EOF
     echo "Please update the .env file with your email credentials for notifications."
 fi

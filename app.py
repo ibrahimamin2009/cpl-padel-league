@@ -539,62 +539,65 @@ def dashboard():
         demoted_teams = check_forfeit_demotions()
         
         if current_user:
-        # User-specific dashboard
-        matches_played = Match.query.filter(
-            ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id)) &
-            (Match.status == 'confirmed')
-        ).count()
-        
-        matches_won = Match.query.filter(
-            (Match.winner_id == current_user.id) & (Match.status == 'confirmed')
-        ).count()
-        
-        win_percentage = (matches_won / matches_played * 100) if matches_played > 0 else 0
-        
-        # Get recent matches for this team
-        recent_matches = Match.query.filter(
-            ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id))
-        ).order_by(Match.created_at.desc()).limit(5).all()
-        
-        # Get pending challenges for this team
-        pending_challenges = Challenge.query.filter(
-            (Challenge.challenged_team_id == current_user.id) & (Challenge.status == 'pending')
-        ).all()
-        
-        # Calculate display rank for current user (only for non-admin users)
-        display_rank = None
-        if not current_user.is_admin:
-            all_teams = User.query.filter(
-                (User.status == 'active') & 
-                (User.is_admin == False)
-            ).order_by(User.rank).all()
+            # User-specific dashboard
+            matches_played = Match.query.filter(
+                ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id)) &
+                (Match.status == 'confirmed')
+            ).count()
             
-            for i, team in enumerate(all_teams, 1):
-                if team.id == current_user.id:
-                    display_rank = i
-                    break
-        
-        return render_template('dashboard.html', 
-                             current_user=current_user,
-                             display_rank=display_rank,
-                             matches_played=matches_played,
-                             matches_won=matches_won,
-                             win_percentage=win_percentage,
-                             recent_matches=recent_matches,
-                             pending_challenges=pending_challenges)
-    else:
-        # Public dashboard
-        total_teams = User.query.count()
-        active_teams = User.query.filter_by(status='active').count()
-        recent_matches = Match.query.order_by(Match.created_at.desc()).limit(5).all()
-        pending_challenges = Challenge.query.filter_by(status='pending').all()
-        
-        return render_template('dashboard.html', 
-                             current_user=None,
-                             total_teams=total_teams,
-                             active_teams=active_teams,
-                             recent_matches=recent_matches,
-                             pending_challenges=pending_challenges)
+            matches_won = Match.query.filter(
+                (Match.winner_id == current_user.id) & (Match.status == 'confirmed')
+            ).count()
+            
+            win_percentage = (matches_won / matches_played * 100) if matches_played > 0 else 0
+            
+            # Get recent matches for this team
+            recent_matches = Match.query.filter(
+                ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id))
+            ).order_by(Match.created_at.desc()).limit(5).all()
+            
+            # Get pending challenges for this team
+            pending_challenges = Challenge.query.filter(
+                (Challenge.challenged_team_id == current_user.id) & (Challenge.status == 'pending')
+            ).all()
+            
+            # Calculate display rank for current user (only for non-admin users)
+            display_rank = None
+            if not current_user.is_admin:
+                all_teams = User.query.filter(
+                    (User.status == 'active') & 
+                    (User.is_admin == False)
+                ).order_by(User.rank).all()
+                
+                for i, team in enumerate(all_teams, 1):
+                    if team.id == current_user.id:
+                        display_rank = i
+                        break
+            
+            return render_template('dashboard.html', 
+                                 current_user=current_user,
+                                 display_rank=display_rank,
+                                 matches_played=matches_played,
+                                 matches_won=matches_won,
+                                 win_percentage=win_percentage,
+                                 recent_matches=recent_matches,
+                                 pending_challenges=pending_challenges)
+        else:
+            # Public dashboard
+            total_teams = User.query.count()
+            active_teams = User.query.filter_by(status='active').count()
+            recent_matches = Match.query.order_by(Match.created_at.desc()).limit(5).all()
+            pending_challenges = Challenge.query.filter_by(status='pending').all()
+            
+            return render_template('dashboard.html', 
+                                 current_user=None,
+                                 total_teams=total_teams,
+                                 active_teams=active_teams,
+                                 recent_matches=recent_matches,
+                                 pending_challenges=pending_challenges)
+    except Exception as e:
+        flash(f'Error loading dashboard: {str(e)}', 'error')
+        return redirect(url_for('index'))
 
 @app.route('/analytics')
 def analytics():
@@ -783,6 +786,9 @@ def challenge():
         db.session.add(new_challenge)
         db.session.commit()
         
+        # Send email notification
+        send_challenge_notification(new_challenge)
+        
         flash('Challenge sent successfully!', 'success')
         return redirect(url_for('challenge'))
     
@@ -847,7 +853,13 @@ def respond_to_challenge(challenge_id, action):
         )
         db.session.add(new_match)
         challenge.match_id = new_match.id
+        
+        # Send email notification
+        send_challenge_response_notification(challenge, 'accepted')
+        
         flash('Challenge accepted! Now coordinate venue and time. You have 10 days to complete this match.', 'success')
+        db.session.commit()
+        return redirect(url_for('matches'))
     elif action == 'reject':
         challenge.status = 'rejected'
         # Count as forfeit for challenged team and update ladder
@@ -859,10 +871,12 @@ def respond_to_challenge(challenge_id, action):
             challenging_team.rank = current_user.rank
             current_user.rank += 1
         
+        # Send email notification
+        send_challenge_response_notification(challenge, 'rejected')
+        
         flash('Challenge rejected. This counts as a forfeit and ladder has been updated.', 'warning')
-    
-    db.session.commit()
-    return redirect(url_for('challenge'))
+        db.session.commit()
+        return redirect(url_for('challenge'))
 
 @app.route('/match/<int:match_id>/venue', methods=['GET', 'POST'])
 def propose_venue(match_id):
@@ -906,6 +920,10 @@ def propose_venue(match_id):
         match.venue_approved = None
         
         db.session.commit()
+        
+        # Send email notification
+        send_venue_proposal_notification(match, current_user)
+        
         flash('Venue and time proposed! Waiting for opponent approval.', 'success')
         return redirect(url_for('matches'))
     
@@ -933,6 +951,10 @@ def respond_venue(match_id, action):
         match.venue_approved_by = current_user.id
         match.venue = match.proposed_venue
         match.date = match.proposed_date
+        
+        # Send email notification
+        send_venue_response_notification(match, 'approved')
+        
         flash('Venue and time approved!', 'success')
     elif action == 'reject':
         match.venue_approved = False
@@ -940,6 +962,10 @@ def respond_venue(match_id, action):
         match.proposed_venue = None
         match.proposed_date = None
         match.proposed_by = None
+        
+        # Send email notification
+        send_venue_response_notification(match, 'rejected')
+        
         flash('Venue and time rejected. Please propose new venue and time.', 'info')
     
     db.session.commit()
@@ -1019,6 +1045,10 @@ def enter_score(match_id):
         match.score_deadline = datetime.now(LAHORE_TZ) + timedelta(hours=5)
         
         db.session.commit()
+        
+        # Send email notification
+        send_score_entry_notification(match)
+        
         flash('Score entered successfully! Waiting for opponent approval. You have 5 hours to approve the score.', 'success')
         return redirect(url_for('matches'))
     
@@ -1062,6 +1092,9 @@ def respond_score(match_id, action):
         loser = User.query.get(match.team1_id if match.winner_id == match.team2_id else match.team2_id)
         update_ladder(winner, loser)
         
+        # Send email notification
+        send_score_response_notification(match, 'approved')
+        
         db.session.commit()
         flash('Score approved! Ladder updated.', 'success')
         
@@ -1070,6 +1103,9 @@ def respond_score(match_id, action):
         match.score_approved_by = current_user.id
         match.score_disputed = True
         match.status = 'disputed'
+        
+        # Send email notification
+        send_score_response_notification(match, 'rejected')
         
         db.session.commit()
         flash('Score rejected. Admin will review the dispute.', 'info')
@@ -1881,6 +1917,23 @@ def admin_reset_match(match_id):
     flash('Match reset to scheduled status!', 'success')
     return redirect(url_for('admin_matches'))
 
+@app.route('/admin/send-reminders', methods=['POST'])
+def admin_send_reminders():
+    """Admin route to manually trigger email reminders"""
+    current_user = get_current_user()
+    
+    if not current_user or not current_user.is_admin:
+        flash('Admin access required.', 'error')
+        return redirect(url_for('admin_dashboard'))
+    
+    try:
+        send_scheduled_reminders()
+        flash('Email reminders sent successfully!', 'success')
+    except Exception as e:
+        flash(f'Error sending reminders: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_dashboard'))
+
 # Create database tables
 def create_tables():
     with app.app_context():
@@ -1895,14 +1948,378 @@ def create_tables():
 # Initialize database tables
 def init_db():
     with app.app_context():
-        db.create_all()
-        # Initialize default tier configuration
-        initialize_default_tiers()
-        # Update tiers for all existing teams
-        update_all_tiers()
-        print("✅ Database initialized successfully!")
+        try:
+            db.create_all()
+            # Initialize default tier configuration
+            initialize_default_tiers()
+            # Update tiers for all existing teams
+            update_all_tiers()
+            
+            # Create admin user if it doesn't exist
+            admin = User.query.filter_by(is_admin=True).first()
+            if not admin:
+                admin = User(
+                    team_name='Admin',
+                    player1_name='Administrator',
+                    player1_email='admin@cpl.com',
+                    player2_name='Admin',
+                    player2_email='admin@cpl.com',
+                    password_hash='admin123',
+                    is_admin=True,
+                    rank=0,
+                    tier='Admin',
+                    status='active'
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("✅ Admin user created!")
+            
+            print("✅ Database initialized successfully!")
+        except Exception as e:
+            print(f"❌ Database initialization error: {e}")
+
+# Initialize database when app starts
+init_db()
+
+# Email notification functions
+def send_email_notification(recipient_email, subject, body):
+    """Send email notification"""
+    try:
+        msg = Message(
+            subject=subject,
+            recipients=[recipient_email],
+            body=body,
+            sender=app.config['MAIL_USERNAME']
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Email sending failed: {e}")
+        return False
+
+def send_challenge_notification(challenge):
+    """Send challenge notification to challenged team"""
+    try:
+        challenged_team = User.query.get(challenge.challenged_team_id)
+        challenging_team = User.query.get(challenge.challenging_team_id)
+        
+        if not challenged_team or not challenging_team:
+            print("Error: Team not found for challenge notification")
+            return False
+        
+        subject = f"New Challenge from {challenging_team.team_name}"
+        body = f"""
+Hello {challenged_team.team_name},
+
+You have received a challenge from {challenging_team.team_name}.
+
+Challenge Details:
+- Challenging Team: {challenging_team.team_name} (Rank: {challenging_team.rank})
+- Your Team: {challenged_team.team_name} (Rank: {challenged_team.rank})
+- Expires: {challenge.expires_at.strftime('%Y-%m-%d %H:%M')} (Lahore time)
+
+Please log in to your CPL dashboard to accept or reject this challenge.
+
+Best regards,
+CPL System
+"""
+        
+        # Send to both players
+        send_email_notification(challenged_team.player1_email, subject, body)
+        send_email_notification(challenged_team.player2_email, subject, body)
+        return True
+    except Exception as e:
+        print(f"Error sending challenge notification: {e}")
+        return False
+
+def send_challenge_response_notification(challenge, response):
+    """Send notification when challenge is accepted/rejected"""
+    try:
+        challenging_team = User.query.get(challenge.challenging_team_id)
+        challenged_team = User.query.get(challenge.challenged_team_id)
+        
+        if not challenging_team or not challenged_team:
+            print("Error: Team not found for challenge response notification")
+            return False
+        
+        if response == 'accepted':
+            subject = f"Challenge Accepted by {challenged_team.team_name}"
+            body = f"""
+Hello {challenging_team.team_name},
+
+Your challenge to {challenged_team.team_name} has been ACCEPTED!
+
+Match Details:
+- Your Team: {challenging_team.team_name}
+- Opponent: {challenged_team.team_name}
+- Match Deadline: 10 days from now
+
+Please coordinate with your opponent to schedule the match within 10 days.
+
+Best regards,
+CPL System
+"""
+        else:
+            subject = f"Challenge Rejected by {challenged_team.team_name}"
+            body = f"""
+Hello {challenging_team.team_name},
+
+Your challenge to {challenged_team.team_name} has been REJECTED.
+
+You can challenge other teams or wait for new challenges.
+
+Best regards,
+CPL System
+"""
+        
+        # Send to both players
+        send_email_notification(challenging_team.player1_email, subject, body)
+        send_email_notification(challenging_team.player2_email, subject, body)
+        return True
+    except Exception as e:
+        print(f"Error sending challenge response notification: {e}")
+        return False
+
+def send_match_reminder_notification(match):
+    """Send reminder for upcoming match deadline"""
+    team1 = User.query.get(match.team1_id)
+    team2 = User.query.get(match.team2_id)
+    
+    subject = f"Match Reminder: {team1.team_name} vs {team2.team_name}"
+    body = f"""
+Match Reminder
+
+Your match is approaching its deadline:
+
+Match: {team1.team_name} vs {team2.team_name}
+Deadline: {match.match_deadline.strftime('%Y-%m-%d %H:%M')} (Lahore time)
+
+Please schedule and play your match before the deadline to avoid forfeits.
+
+Best regards,
+CPL System
+"""
+    
+    # Send to all players
+    send_email_notification(team1.player1_email, subject, body)
+    send_email_notification(team1.player2_email, subject, body)
+    send_email_notification(team2.player1_email, subject, body)
+    send_email_notification(team2.player2_email, subject, body)
+
+def send_score_reminder_notification(match):
+    """Send reminder for score entry deadline"""
+    team1 = User.query.get(match.team1_id)
+    team2 = User.query.get(match.team2_id)
+    
+    subject = f"Score Entry Reminder: {team1.team_name} vs {team2.team_name}"
+    body = f"""
+Score Entry Reminder
+
+Your match has been played but scores haven't been entered:
+
+Match: {team1.team_name} vs {team2.team_name}
+Score Deadline: {match.score_deadline.strftime('%Y-%m-%d %H:%M')} (Lahore time)
+
+Please enter the match scores before the deadline to avoid penalties.
+
+Best regards,
+CPL System
+"""
+    
+    # Send to all players
+    send_email_notification(team1.player1_email, subject, body)
+    send_email_notification(team1.player2_email, subject, body)
+    send_email_notification(team2.player1_email, subject, body)
+    send_email_notification(team2.player2_email, subject, body)
+
+def send_venue_proposal_notification(match, proposing_team):
+    """Send notification for venue proposal"""
+    team1 = User.query.get(match.team1_id)
+    team2 = User.query.get(match.team2_id)
+    other_team = team2 if proposing_team.id == team1.id else team1
+    
+    subject = f"Venue Proposal: {team1.team_name} vs {team2.team_name}"
+    body = f"""
+Venue Proposal
+
+{proposing_team.team_name} has proposed a venue for your match:
+
+Match: {team1.team_name} vs {team2.team_name}
+Proposed Date: {match.proposed_date.strftime('%Y-%m-%d %H:%M')} (Lahore time)
+Proposed Venue: {match.proposed_venue}
+
+Please log in to approve or reject this proposal.
+
+Best regards,
+CPL System
+"""
+    
+    # Send to the other team
+    send_email_notification(other_team.player1_email, subject, body)
+    send_email_notification(other_team.player2_email, subject, body)
+
+def send_venue_response_notification(match, response):
+    """Send notification when venue proposal is approved/rejected"""
+    try:
+        team1 = User.query.get(match.team1_id)
+        team2 = User.query.get(match.team2_id)
+        proposing_team = User.query.get(match.proposed_by)
+        
+        if not team1 or not team2 or not proposing_team:
+            print("Error: Team not found for venue response notification")
+            return False
+            
+        if response == 'approved':
+            subject = f"Venue Approved: {team1.team_name} vs {team2.team_name}"
+            body = f"""
+Venue Approved
+
+Your venue proposal has been APPROVED!
+
+Match: {team1.team_name} vs {team2.team_name}
+Approved Date: {match.date.strftime('%Y-%m-%d %H:%M')} (Lahore time)
+Approved Venue: {match.venue}
+
+The match is now confirmed. Please coordinate with your opponent.
+
+Best regards,
+CPL System
+"""
+        else:
+            subject = f"Venue Rejected: {team1.team_name} vs {team2.team_name}"
+            body = f"""
+Venue Rejected
+
+Your venue proposal has been REJECTED.
+
+Match: {team1.team_name} vs {team2.team_name}
+
+Please propose a new venue and time for your match.
+
+Best regards,
+CPL System
+"""
+        
+        # Send to the proposing team
+        send_email_notification(proposing_team.player1_email, subject, body)
+        send_email_notification(proposing_team.player2_email, subject, body)
+        return True
+    except Exception as e:
+        print(f"Error sending venue response notification: {e}")
+        return False
+
+def send_score_entry_notification(match):
+    """Send notification when score is entered"""
+    try:
+        team1 = User.query.get(match.team1_id)
+        team2 = User.query.get(match.team2_id)
+        entering_team = User.query.get(match.score_entered_by)
+        other_team = team2 if entering_team.id == team1.id else team1
+        
+        if not team1 or not team2 or not entering_team:
+            print("Error: Team not found for score entry notification")
+            return False
+            
+        subject = f"Score Entered: {team1.team_name} vs {team2.team_name}"
+        body = f"""
+Score Entered
+
+{entering_team.team_name} has entered the match scores:
+
+Match: {team1.team_name} vs {team2.team_name}
+Score Deadline: {match.score_deadline.strftime('%Y-%m-%d %H:%M')} (Lahore time)
+
+Please log in to approve or reject these scores within 5 hours.
+
+Best regards,
+CPL System
+"""
+        
+        # Send to the other team
+        send_email_notification(other_team.player1_email, subject, body)
+        send_email_notification(other_team.player2_email, subject, body)
+        return True
+    except Exception as e:
+        print(f"Error sending score entry notification: {e}")
+        return False
+
+def send_score_response_notification(match, response):
+    """Send notification when score is approved/rejected"""
+    try:
+        team1 = User.query.get(match.team1_id)
+        team2 = User.query.get(match.team2_id)
+        entering_team = User.query.get(match.score_entered_by)
+        
+        if not team1 or not team2 or not entering_team:
+            print("Error: Team not found for score response notification")
+            return False
+            
+        if response == 'approved':
+            winner = User.query.get(match.winner_id)
+            loser = team1 if match.winner_id == team2.id else team2
+            
+            subject = f"Score Approved: {team1.team_name} vs {team2.team_name}"
+            body = f"""
+Score Approved
+
+The match scores have been APPROVED!
+
+Match: {team1.team_name} vs {team2.team_name}
+Winner: {winner.team_name}
+Loser: {loser.team_name}
+
+The ladder has been updated accordingly.
+
+Best regards,
+CPL System
+"""
+        else:
+            subject = f"Score Rejected: {team1.team_name} vs {team2.team_name}"
+            body = f"""
+Score Rejected
+
+The match scores have been REJECTED.
+
+Match: {team1.team_name} vs {team2.team_name}
+
+This match is now disputed and will be reviewed by an admin.
+
+Best regards,
+CPL System
+"""
+        
+        # Send to the team that entered the score
+        send_email_notification(entering_team.player1_email, subject, body)
+        send_email_notification(entering_team.player2_email, subject, body)
+        return True
+    except Exception as e:
+        print(f"Error sending score response notification: {e}")
+        return False
+
+def send_scheduled_reminders():
+    """Send scheduled reminders for matches and scores"""
+    now = datetime.now(LAHORE_TZ)
+    
+    # Send match deadline reminders (2 days before deadline)
+    upcoming_matches = Match.query.filter(
+        (Match.status == 'scheduled') &
+        (Match.match_deadline > now) &
+        (Match.match_deadline <= now + timedelta(days=2))
+    ).all()
+    
+    for match in upcoming_matches:
+        send_match_reminder_notification(match)
+    
+    # Send score deadline reminders (2 hours before deadline)
+    played_matches = Match.query.filter(
+        (Match.status == 'played') &
+        (Match.score_deadline > now) &
+        (Match.score_deadline <= now + timedelta(hours=2))
+    ).all()
+    
+    for match in played_matches:
+        send_score_reminder_notification(match)
 
 if __name__ == '__main__':
-    init_db()
     port = int(os.environ.get('PORT', 8000))
     app.run(debug=False, host='0.0.0.0', port=port)

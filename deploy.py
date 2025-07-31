@@ -1,73 +1,42 @@
 #!/usr/bin/env python3
 """
-CPL Deployment Script
-Helps set up the database and create initial admin user
+Deployment preparation script for CPL
 """
-
 import os
-import sys
-from app import app, db, User
-from werkzeug.security import generate_password_hash
+import secrets
 
-def create_admin_user():
-    """Create an admin user for the application"""
-    with app.app_context():
-        # Check if admin already exists
-        admin = User.query.filter_by(is_admin=True).first()
-        if admin:
-            print(f"✅ Admin user already exists: {admin.team_name}")
-            return admin
-        
-        # Create admin user
-        admin = User(
-            team_name='Admin',
-            player1_name='Administrator',
-            player1_email='admin@cpl.com',
-            player2_name='Admin',
-            player2_email='admin@cpl.com',
-            password_hash=generate_password_hash('admin123'),
-            is_admin=True,
-            rank=0,
-            tier='Admin'
-        )
-        
-        db.session.add(admin)
-        db.session.commit()
-        print("✅ Admin user created!")
-        print("   Username: Admin")
-        print("   Password: admin123")
-        return admin
+def generate_secret_key():
+    """Generate a secure secret key"""
+    return secrets.token_hex(32)
 
-def setup_database():
-    """Set up the database tables"""
-    with app.app_context():
-        db.create_all()
-        print("✅ Database tables created!")
-        
-        # Initialize default tiers
-        from app import initialize_default_tiers
-        initialize_default_tiers()
-        print("✅ Default tiers initialized!")
+def create_env_template():
+    """Create environment variables template"""
+    secret_key = generate_secret_key()
+    
+    env_content = f"""# CPL Environment Variables
+# Copy these to your deployment platform's environment variables
 
-def main():
-    """Main deployment function"""
-    print("🚀 CPL Deployment Script")
-    print("=" * 40)
+SECRET_KEY={secret_key}
+MAIL_USERNAME=ibrahimamin9621@gmail.com
+MAIL_PASSWORD=dotsxdjzmmxrgsrk
+
+# Database (Railway will provide DATABASE_URL automatically)
+# DATABASE_URL=postgresql://...
+
+# Flask settings
+FLASK_ENV=production
+FLASK_DEBUG=False
+"""
     
-    # Set up database
-    setup_database()
+    with open('env_template.txt', 'w') as f:
+        f.write(env_content)
     
-    # Create admin user
-    create_admin_user()
-    
-    print("\n✅ Deployment complete!")
+    print("✅ Environment template created: env_template.txt")
+    print(f"🔐 Your secret key: {secret_key}")
     print("\n📋 Next steps:")
-    print("1. Deploy to Railway/Render/PythonAnywhere")
-    print("2. Set environment variables:")
-    print("   - SECRET_KEY")
-    print("   - DATABASE_URL (if using external DB)")
-    print("3. Access your app and login as Admin")
-    print("4. Create teams and start your league!")
+    print("1. Copy the environment variables to your Railway project")
+    print("2. Deploy your code to Railway")
+    print("3. Your app should now work without the IndentationError!")
 
 if __name__ == '__main__':
-    main() 
+    create_env_template() 

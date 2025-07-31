@@ -101,12 +101,23 @@
                     </div>
                 </div>
                 <div class="challenge-actions">
-                    <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='accept') }}" class="btn btn-success">
-                        <i class="fas fa-check"></i> Accept
-                    </a>
-                    <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='reject') }}" class="btn btn-danger">
-                        <i class="fas fa-times"></i> Reject (Forfeit)
-                    </a>
+                    {% if challenge.status == 'pending' %}
+                        <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='accept') }}" class="btn btn-success">
+                            <i class="fas fa-check"></i> Accept
+                        </a>
+                        <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='reject') }}" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Reject (Forfeit)
+                        </a>
+                    {% elif challenge.status == 'accepted' %}
+                        <span class="status-badge status-accepted">Challenge Accepted</span>
+                        <p class="challenge-note">A match has been created. Check your matches to coordinate venue and time.</p>
+                    {% elif challenge.status == 'rejected' %}
+                        <span class="status-badge status-rejected">Challenge Rejected</span>
+                        <p class="challenge-note">This challenge was rejected and counts as a forfeit.</p>
+                    {% elif challenge.status == 'expired' %}
+                        <span class="status-badge status-expired">Challenge Expired</span>
+                        <p class="challenge-note">This challenge expired and counts as a forfeit for the challenged team.</p>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -259,6 +270,28 @@
 .status-pending {
     background: #fbd38d;
     color: #d69e2e;
+}
+
+.status-accepted {
+    background: #9ae6b4;
+    color: #22543d;
+}
+
+.status-rejected {
+    background: #feb2b2;
+    color: #742a2a;
+}
+
+.status-expired {
+    background: #cbd5e0;
+    color: #2d3748;
+}
+
+.challenge-note {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
 }
 
 .btn-success {

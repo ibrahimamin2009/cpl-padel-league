@@ -241,6 +241,11 @@
                     <a href="{{ url_for('analytics') }}" class="btn btn-info">
                         <i class="fas fa-chart-bar"></i> View Analytics
                     </a>
+                    <form method="POST" action="{{ url_for('admin_send_reminders') }}" style="display: inline;">
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Send email reminders to all teams with upcoming deadlines?')">
+                            <i class="fas fa-envelope"></i> Send Email Reminders
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -1,0 +1,13 @@
+# CPL Environment Variables
+# Copy these to your deployment platform's environment variables
+
+SECRET_KEY=a71a1100cb99d493fab58607540e932bf16c8d2079a5a5cbee4618b852ecec63
+MAIL_USERNAME=ibrahimamin9621@gmail.com
+MAIL_PASSWORD=dotsxdjzmmxrgsrk
+
+# Database (Railway will provide DATABASE_URL automatically)
+# DATABASE_URL=postgresql://...
+
+# Flask settings
+FLASK_ENV=production
+FLASK_DEBUG=False

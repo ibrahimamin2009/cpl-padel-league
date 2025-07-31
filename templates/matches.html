@@ -66,8 +66,6 @@
                     <div class="match-actions">
                         {% if match.status == 'scheduled' %}
                             {% if current_user.id in [match.team1_id, match.team2_id] %}
-
-                                
                                 {% if not match.venue and not match.proposed_venue %}
                                     <a href="{{ url_for('propose_venue', match_id=match.id) }}" class="btn btn-primary">
                                         <i class="fas fa-map-marker-alt"></i> Propose Venue
