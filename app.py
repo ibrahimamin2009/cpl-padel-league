@@ -82,7 +82,6 @@ class TierConfig(db.Model):
     tier_name = db.Column(db.String(20), nullable=False, unique=True)
     max_rank = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(LAHORE_TZ))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(LAHORE_TZ), onupdate=lambda: datetime.now(LAHORE_TZ))
 
 class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
