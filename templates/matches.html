@@ -67,7 +67,7 @@
                         {% if match.status == 'scheduled' %}
                             {% if current_user.id in [match.team1_id, match.team2_id] %}
                                 {% if not match.venue and not match.proposed_venue %}
-                                    <a href="{{ url_for('propose_venue', match_id=match.id) }}" class="btn btn-primary">
+                                    <a href="{{ url_for('propose_venue', match_id=match.id) }}" class="btn btn-primary btn-full">
                                         <i class="fas fa-map-marker-alt"></i> Propose Venue
                                     </a>
                                 {% elif match.proposed_venue %}
@@ -75,10 +75,10 @@
                                         <div class="venue-proposal">
                                             <p><strong>Proposed:</strong> {{ match.proposed_venue }} on {{ match.proposed_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
                                             <div class="proposal-actions">
-                                                <a href="{{ url_for('respond_venue', match_id=match.id, action='approve') }}" class="btn btn-success">
+                                                <a href="{{ url_for('respond_venue', match_id=match.id, action='approve') }}" class="btn btn-success btn-full">
                                                     <i class="fas fa-check"></i> Approve
                                                 </a>
-                                                <a href="{{ url_for('respond_venue', match_id=match.id, action='reject') }}" class="btn btn-warning">
+                                                <a href="{{ url_for('respond_venue', match_id=match.id, action='reject') }}" class="btn btn-warning btn-full">
                                                     <i class="fas fa-times"></i> Reject
                                                 </a>
                                             </div>
@@ -90,7 +90,7 @@
                                         </div>
                                     {% endif %}
                                 {% elif match.venue %}
-                                    <a href="{{ url_for('enter_score', match_id=match.id) }}" class="btn btn-primary">
+                                    <a href="{{ url_for('enter_score', match_id=match.id) }}" class="btn btn-primary btn-full">
                                         <i class="fas fa-trophy"></i> Enter Score
                                     </a>
                                 {% endif %}

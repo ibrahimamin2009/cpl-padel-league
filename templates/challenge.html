@@ -102,10 +102,10 @@
                 </div>
                 <div class="challenge-actions">
                     {% if challenge.status == 'pending' %}
-                        <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='accept') }}" class="btn btn-success">
+                        <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='accept') }}" class="btn btn-success btn-full">
                             <i class="fas fa-check"></i> Accept
                         </a>
-                        <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='reject') }}" class="btn btn-danger">
+                        <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='reject') }}" class="btn btn-danger btn-full">
                             <i class="fas fa-times"></i> Reject (Forfeit)
                         </a>
                     {% elif challenge.status == 'accepted' %}
