@@ -15,7 +15,10 @@
                 <i class="fas fa-tennis-ball"></i>
                 <span>CPL</span>
             </div>
-            <ul class="nav-menu">
+            <button class="mobile-nav-toggle" onclick="toggleMobileNav()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="nav-menu">
                 <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
                 <li><a href="{{ url_for('ranking') }}" class="nav-link">Ranking</a></li>
                 <li><a href="{{ url_for('matches') }}" class="nav-link">Matches</a></li>

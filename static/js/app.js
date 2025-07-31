@@ -15,6 +15,9 @@ function initApp() {
     
     // Add flash message auto-dismiss
     addFlashMessageDismiss();
+    
+    // Initialize mobile navigation
+    initMobileNavigation();
 }
 
 function addSmoothScrolling() {
@@ -83,6 +86,62 @@ function showNotification(message, type = 'info') {
                 notification.remove();
             }, 300);
         }, 5000);
+    }
+}
+
+function initMobileNavigation() {
+    // Mobile navigation toggle functionality
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    const navMenu = document.querySelector('.nav-menu');
+    
+    if (mobileNavToggle && navMenu) {
+        mobileNavToggle.addEventListener('click', function() {
+            navMenu.classList.toggle('mobile-active');
+            
+            // Change icon
+            const icon = this.querySelector('i');
+            if (navMenu.classList.contains('mobile-active')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        });
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!navMenu.contains(e.target) && !mobileNavToggle.contains(e.target)) {
+                navMenu.classList.remove('mobile-active');
+                const icon = mobileNavToggle.querySelector('i');
+                icon.className = 'fas fa-bars';
+            }
+        });
+        
+        // Close mobile menu when clicking on a link
+        navMenu.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                navMenu.classList.remove('mobile-active');
+                const icon = mobileNavToggle.querySelector('i');
+                icon.className = 'fas fa-bars';
+            });
+        });
+    }
+}
+
+// Global function for mobile nav toggle (for onclick)
+function toggleMobileNav() {
+    const navMenu = document.getElementById('nav-menu');
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    
+    if (navMenu && mobileNavToggle) {
+        navMenu.classList.toggle('mobile-active');
+        
+        // Change icon
+        const icon = mobileNavToggle.querySelector('i');
+        if (navMenu.classList.contains('mobile-active')) {
+            icon.className = 'fas fa-times';
+        } else {
+            icon.className = 'fas fa-bars';
+        }
     }
 }
 
