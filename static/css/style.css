@@ -757,7 +757,7 @@ body {
     
     /* Mobile Navigation */
     .mobile-nav-toggle {
-        display: block;
+        display: block !important;
         background: none;
         border: none;
         font-size: 26px;
@@ -767,6 +767,7 @@ body {
         margin-left: 15px;
         min-height: 44px;
         min-width: 44px;
+        z-index: 1001;
     }
     
     /* Mobile user info */
@@ -795,7 +796,7 @@ body {
     }
     
     .nav-menu.mobile-active {
-        display: flex;
+        display: flex !important;
         flex-direction: column;
         position: absolute;
         top: 100%;

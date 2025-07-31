@@ -132,6 +132,10 @@ function toggleMobileNav() {
     const navMenu = document.getElementById('nav-menu');
     const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
     
+    console.log('Toggle mobile nav called');
+    console.log('Nav menu:', navMenu);
+    console.log('Mobile nav toggle:', mobileNavToggle);
+    
     if (navMenu && mobileNavToggle) {
         navMenu.classList.toggle('mobile-active');
         
@@ -139,9 +143,13 @@ function toggleMobileNav() {
         const icon = mobileNavToggle.querySelector('i');
         if (navMenu.classList.contains('mobile-active')) {
             icon.className = 'fas fa-times';
+            console.log('Menu opened');
         } else {
             icon.className = 'fas fa-bars';
+            console.log('Menu closed');
         }
+    } else {
+        console.log('Nav menu or toggle not found');
     }
 }
 
