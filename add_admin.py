@@ -22,17 +22,17 @@ def add_admin_account():
     
     with app.app_context():
         # Check if admin already exists
-        existing_admin = User.query.filter_by(player1_email='ibrahimamin9621@gmail.com').first()
+        existing_admin = User.query.filter_by(team_name="Admin").first()
         
         if existing_admin:
-            print(f"❌ Admin account with email 'ibrahimamin9621@gmail.com' already exists!")
+            print(f"❌ Admin account with team name 'Admin' already exists!")
             print(f"   Team Name: {existing_admin.team_name}")
             print(f"   Is Admin: {existing_admin.is_admin}")
             return
         
         # Create new admin account
         admin_user = User(
-            team_name="Admin Team",
+            team_name="Admin",
             player1_name="Admin User",
             player1_email="ibrahimamin9621@gmail.com",
             player2_name="Admin User",
@@ -50,9 +50,9 @@ def add_admin_account():
             db.session.commit()
             
             print("✅ Admin account created successfully!")
-            print(f"   Email: ibrahimamin9621@gmail.com")
+            print(f"   Team Name: Admin")
             print(f"   Password: admin123")
-            print(f"   Team Name: Admin Team")
+            print(f"   Email: ibrahimamin9621@gmail.com")
             print(f"   Is Admin: {admin_user.is_admin}")
             
         except Exception as e:
