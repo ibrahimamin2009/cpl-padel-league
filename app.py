@@ -446,20 +446,10 @@ def login():
             team_name = request.form.get('team_name')
             password = request.form.get('password')
             
-            print(f"Login attempt - Team Name: '{team_name}', Password: '{password}'")
-            
             user = User.query.filter_by(team_name=team_name).first()
             
-            if user:
-                print(f"User found: {user.team_name}, Status: {user.status}, Is Admin: {user.is_admin}")
-                password_valid = check_password_hash(user.password_hash, password)
-                print(f"Password valid: {password_valid}")
-            else:
-                print(f"User not found for team name: '{team_name}'")
-                password_valid = False
-            
             # Check if user exists and password matches
-            if user and password_valid:
+            if user and check_password_hash(user.password_hash, password):
                 if user.status == 'pending':
                     flash('Your account is pending admin approval. Please wait for approval before logging in.', 'error')
                     return render_template('login.html')
