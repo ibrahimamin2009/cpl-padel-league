@@ -153,6 +153,17 @@ function toggleMobileNav() {
     }
 }
 
+// Simple mobile nav toggle function
+function simpleToggleMenu() {
+    const menu = document.getElementById('nav-menu');
+    const button = document.querySelector('.mobile-nav-toggle');
+    
+    if (menu && button) {
+        menu.classList.toggle('mobile-active');
+        console.log('Menu toggled');
+    }
+}
+
 // Export functions for global use
 window.CPL = {
     showNotification
