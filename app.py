@@ -29,6 +29,9 @@ if os.getenv('DATABASE_URL'):
     # Fix for Railway PostgreSQL URLs
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
+elif os.getenv('RAILWAY_ENVIRONMENT'):
+    # Force PostgreSQL on Railway even if DATABASE_URL is not set
+    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:EYUEkYWjVWzeFkqATysKdjZqXoonoBTm@metro.proxy.rlwy.net:59634/railway"
 else:
     # Development database (SQLite)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
