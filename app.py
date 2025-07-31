@@ -14,20 +14,30 @@ load_dotenv()
 # Set timezone to Lahore, Pakistan
 LAHORE_TZ = ZoneInfo('Asia/Karachi')
 
-# Import configuration
-from config import config
-
-# Get environment
-env = os.getenv('FLASK_ENV', 'development')
+# Create Flask app
 app = Flask(__name__)
-app.config.from_object(config[env])
 
-# Override database URL for production
-if env == 'production' and os.getenv('DATABASE_URL'):
+# Configure app
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Database configuration
+if os.getenv('DATABASE_URL'):
+    # Production database (Railway)
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    # Fix for Heroku/Railway PostgreSQL URLs
+    # Fix for Railway PostgreSQL URLs
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
+else:
+    # Development database (SQLite)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
+
+# Email configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'your-email@gmail.com')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'your-app-password')
 
 db = SQLAlchemy(app)
 mail = Mail(app)
