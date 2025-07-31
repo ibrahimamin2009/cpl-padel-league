@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import os
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
@@ -447,8 +448,8 @@ def login():
             
             user = User.query.filter_by(team_name=team_name).first()
             
-            # Check if user exists and password matches (simple check for now)
-            if user and user.password_hash == password:
+            # Check if user exists and password matches
+            if user and check_password_hash(user.password_hash, password):
                 if user.status == 'pending':
                     flash('Your account is pending admin approval. Please wait for approval before logging in.', 'error')
                     return render_template('login.html')
