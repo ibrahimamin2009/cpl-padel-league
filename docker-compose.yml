@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Main CPL application
+  cpl-app:
+    build: .
+    container_name: cpl-app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+    volumes:
+      - ./instance:/app/instance
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - cpl-network
+
+  # Optional: Nginx reverse proxy (uncomment for production)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: cpl-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #     - ./ssl:/etc/nginx/ssl
+  #   depends_on:
+  #     - cpl-app
+  #   restart: unless-stopped
+  #   networks:
+  #     - cpl-network
+
+  # Optional: PostgreSQL database (uncomment for production)
+  # postgres:
+  #   image: postgres:13-alpine
+  #   container_name: cpl-postgres
+  #   environment:
+  #     POSTGRES_DB: cpl
+  #     POSTGRES_USER: cpl_user
+  #     POSTGRES_PASSWORD: cpl_password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - cpl-network
+
+networks:
+  cpl-network:
+    driver: bridge
+
+volumes:
+  postgres_data: 

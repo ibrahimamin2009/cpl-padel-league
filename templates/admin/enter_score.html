@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Score Entry - CPL{% endblock %}
+
+{% block content %}
+<div class="admin-score-entry">
+    <h1><i class="fas fa-gavel"></i> Admin Score Review</h1>
+    
+    <div class="match-info">
+        <div class="info-card">
+            <h3>Disputed Match Details</h3>
+            <p><strong>Team 1:</strong> {{ match.team1.team_name }}</p>
+            <p><strong>Team 2:</strong> {{ match.team2.team_name }}</p>
+            <p><strong>Venue:</strong> {{ match.venue or 'TBD' }}</p>
+            <p><strong>Date:</strong> {{ match.date.strftime('%B %d, %Y at %I:%M %p') if match.date else 'TBD' }}</p>
+            <p><strong>Status:</strong> <span class="status-disputed">Disputed</span></p>
+            {% if match.score_dispute_reason %}
+            <p><strong>Dispute Reason:</strong> {{ match.score_dispute_reason }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="score-form">
+        <h2><i class="fas fa-edit"></i> Enter Final Score</h2>
+        <form method="POST" class="score-form-content">
+            <div class="sets-container">
+                <div class="set-header">
+                    <h3>Set 1 (Required)</h3>
+                </div>
+                <div class="set-scores">
+                    <div class="score-input">
+                        <label for="set1_team1">{{ match.team1.team_name }}</label>
+                        <input type="number" id="set1_team1" name="set1_team1" min="0" max="20" required>
+                    </div>
+                    <div class="score-separator">-</div>
+                    <div class="score-input">
+                        <label for="set1_team2">{{ match.team2.team_name }}</label>
+                        <input type="number" id="set1_team2" name="set1_team2" min="0" max="20" required>
+                    </div>
+                </div>
+                
+                <div class="set-header">
+                    <h3>Set 2 (Required)</h3>
+                </div>
+                <div class="set-scores">
+                    <div class="score-input">
+                        <label for="set2_team1">{{ match.team1.team_name }}</label>
+                        <input type="number" id="set2_team1" name="set2_team1" min="0" max="20" required>
+                    </div>
+                    <div class="score-separator">-</div>
+                    <div class="score-input">
+                        <label for="set2_team2">{{ match.team2.team_name }}</label>
+                        <input type="number" id="set2_team2" name="set2_team2" min="0" max="20" required>
+                    </div>
+                </div>
+                
+                <div class="set-header">
+                    <h3>Set 3 (Optional - Tiebreaker)</h3>
+                </div>
+                <div class="set-scores">
+                    <div class="score-input">
+                        <label for="set3_team1">{{ match.team1.team_name }}</label>
+                        <input type="number" id="set3_team1" name="set3_team1" min="0" max="20">
+                    </div>
+                    <div class="score-separator">-</div>
+                    <div class="score-input">
+                        <label for="set3_team2">{{ match.team2.team_name }}</label>
+                        <input type="number" id="set3_team2" name="set3_team2" min="0" max="20">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="score-preview">
+                <h3>Score Preview</h3>
+                <div class="preview-score">
+                    <span id="preview-team1">{{ match.team1.team_name }}</span>
+                    <span id="preview-score">0 - 0</span>
+                    <span id="preview-team2">{{ match.team2.team_name }}</span>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Submit Final Score
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Admin Dashboard
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.admin-score-entry {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.admin-score-entry h1 {
+    color: #333;
+    font-size: 28px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-score-entry h1 i {
+    color: #e53e3e;
+}
+
+.match-info {
+    margin-bottom: 30px;
+}
+
+.info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #e53e3e;
+}
+
+.info-card h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.info-card p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.status-disputed {
+    color: #e53e3e;
+    font-weight: bold;
+}
+
+.score-form {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.score-form h2 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.score-form h2 i {
+    color: #667eea;
+}
+
+.sets-container {
+    margin-bottom: 30px;
+}
+
+.set-header {
+    margin-bottom: 15px;
+}
+
+.set-header h3 {
+    color: #333;
+    font-size: 16px;
+    margin: 0;
+}
+
+.set-scores {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.score-input {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.score-input label {
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+    text-align: center;
+}
+
+.score-input input {
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
+
+.score-input input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.score-separator {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+    margin: 0 10px;
+}
+
+.score-preview {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.score-preview h3 {
+    color: #333;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.preview-score {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.preview-score span:first-child {
+    color: #667eea;
+}
+
+.preview-score span:last-child {
+    color: #667eea;
+}
+
+#preview-score {
+    color: #333;
+    font-size: 24px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #e1e5e9;
+    color: #666;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .set-scores {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .score-separator {
+        margin: 10px 0;
+    }
+    
+    .preview-score {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Update score preview in real-time
+function updateScorePreview() {
+    const set1Team1 = parseInt(document.getElementById('set1_team1').value) || 0;
+    const set1Team2 = parseInt(document.getElementById('set1_team2').value) || 0;
+    const set2Team1 = parseInt(document.getElementById('set2_team1').value) || 0;
+    const set2Team2 = parseInt(document.getElementById('set2_team2').value) || 0;
+    const set3Team1 = parseInt(document.getElementById('set3_team1').value) || 0;
+    const set3Team2 = parseInt(document.getElementById('set3_team2').value) || 0;
+    
+    let team1Sets = 0;
+    let team2Sets = 0;
+    
+    if (set1Team1 > set1Team2) team1Sets++;
+    else if (set1Team2 > set1Team1) team2Sets++;
+    
+    if (set2Team1 > set2Team2) team1Sets++;
+    else if (set2Team2 > set2Team1) team2Sets++;
+    
+    if (set3Team1 > 0 || set3Team2 > 0) {
+        if (set3Team1 > set3Team2) team1Sets++;
+        else if (set3Team2 > set3Team1) team2Sets++;
+    }
+    
+    const previewScore = document.getElementById('preview-score');
+    previewScore.textContent = `${team1Sets} - ${team2Sets}`;
+    
+    // Highlight winner
+    if (team1Sets > team2Sets) {
+        previewScore.style.color = '#38a169';
+    } else if (team2Sets > team1Sets) {
+        previewScore.style.color = '#38a169';
+    } else {
+        previewScore.style.color = '#333';
+    }
+}
+
+// Add event listeners to all score inputs
+document.addEventListener('DOMContentLoaded', function() {
+    const scoreInputs = document.querySelectorAll('input[type="number"]');
+    scoreInputs.forEach(input => {
+        input.addEventListener('input', updateScorePreview);
+    });
+    
+    // Initial update
+    updateScorePreview();
+});
+</script>
+{% endblock %} 

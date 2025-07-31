@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - CPL{% endblock %}
+
+{% block content %}
+<div class="analytics">
+    <h1>League Analytics</h1>
+    
+    <!-- Overview Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ total_teams }}</h3>
+            <p>Total Teams</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ active_teams }}</h3>
+            <p>Active Teams</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ total_matches }}</h3>
+            <p>Total Matches</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ played_matches }}</h3>
+            <p>Completed Matches</p>
+        </div>
+    </div>
+    
+    <!-- Tier Distribution -->
+    <div class="analytics-section">
+        <h2><i class="fas fa-chart-pie"></i> Tier Distribution</h2>
+        <div class="tier-chart">
+            {% for tier, count in tier_stats %}
+            <div class="tier-bar">
+                <div class="tier-label">
+                    <span class="tier-badge tier-{{ tier.lower() }}">{{ tier }}</span>
+                </div>
+                <div class="tier-progress">
+                    <div class="progress-bar" style="width: {{ (count / total_teams * 100) if total_teams > 0 else 0 }}%"></div>
+                </div>
+                <div class="tier-count">{{ count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Top Teams -->
+    <div class="analytics-section">
+        <h2><i class="fas fa-trophy"></i> Top Teams by Wins</h2>
+        {% if top_teams %}
+        <div class="top-teams">
+            {% for team in top_teams %}
+            <div class="team-rank">
+                <div class="rank-number">{{ loop.index }}</div>
+                <div class="team-info">
+                    <h4>{{ team.team_name }}</h4>
+                    <p>{{ team.wins }} wins</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No completed matches yet.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="analytics-section">
+        <h2><i class="fas fa-history"></i> Recent Matches</h2>
+        {% if recent_matches %}
+        <div class="recent-matches">
+            {% for match in recent_matches %}
+            <div class="match-item">
+                <div class="match-teams">
+                    {{ match.team1.team_name }} vs {{ match.team2.team_name }}
+                </div>
+                <div class="match-score">
+                    {% if match.set1_team1_score is not none and match.set1_team2_score is not none %}
+                        Set 1: {{ match.set1_team1_score }}-{{ match.set1_team2_score }}
+                        {% if match.set2_team1_score is not none and match.set2_team2_score is not none %}
+                        , Set 2: {{ match.set2_team1_score }}-{{ match.set2_team2_score }}
+                        {% endif %}
+                        {% if match.set3_team1_score is not none and match.set3_team2_score is not none %}
+                        , Set 3: {{ match.set3_team1_score }}-{{ match.set3_team2_score }}
+                        {% endif %}
+                    {% else %}
+                        TBD
+                    {% endif %}
+                </div>
+                <div class="match-date">
+                    {% if match.date %}
+                        {{ match.date.strftime('%B %d, %Y') }}
+                    {% else %}
+                        TBD
+                    {% endif %}
+                </div>
+                <div class="match-status status-{{ match.status }}">
+                    {{ match.status|title }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No matches played yet.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Challenges -->
+    <div class="analytics-section">
+        <h2><i class="fas fa-bell"></i> Recent Challenges</h2>
+        {% if recent_challenges %}
+        <div class="recent-challenges">
+            {% for challenge in recent_challenges %}
+            <div class="challenge-item">
+                <div class="challenge-teams">
+                    {{ challenge.challenging_team.team_name }} → {{ challenge.challenged_team.team_name }}
+                </div>
+                <div class="challenge-date">
+                    {{ challenge.created_at.strftime('%B %d, %Y') }}
+                </div>
+                <div class="challenge-status status-{{ challenge.status }}">
+                    {{ challenge.status|title }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No challenges sent yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.analytics {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.analytics h1 {
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.analytics-section {
+    margin-bottom: 40px;
+}
+
+.analytics-section h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.analytics-section h2 i {
+    color: #667eea;
+}
+
+.tier-chart {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.tier-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.tier-label {
+    min-width: 80px;
+}
+
+.tier-progress {
+    flex: 1;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.tier-count {
+    min-width: 40px;
+    text-align: right;
+    font-weight: 600;
+    color: #333;
+}
+
+.top-teams {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.team-rank {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.team-rank:last-child {
+    border-bottom: none;
+}
+
+.rank-number {
+    width: 40px;
+    height: 40px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-right: 15px;
+}
+
+.team-info h4 {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.team-info p {
+    color: #666;
+    font-size: 14px;
+}
+
+.recent-matches, .recent-challenges {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.match-item, .challenge-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.match-item:last-child, .challenge-item:last-child {
+    border-bottom: none;
+}
+
+.match-teams, .challenge-teams {
+    flex: 1;
+    font-weight: 600;
+    color: #333;
+}
+
+.match-score {
+    min-width: 80px;
+    text-align: center;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.match-date, .challenge-date {
+    min-width: 120px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+.match-status, .challenge-status {
+    min-width: 100px;
+    text-align: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-scheduled {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-played {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.status-confirmed {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.status-pending {
+    background: #fbd38d;
+    color: #d69e2e;
+}
+
+.status-accepted {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.status-rejected {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+@media (max-width: 768px) {
+    .analytics {
+        padding: 20px 10px;
+    }
+    
+    .match-item, .challenge-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .match-score, .match-date, .match-status,
+    .challenge-date, .challenge-status {
+        min-width: auto;
+        text-align: left;
+    }
+    
+    .tier-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .tier-progress {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %} 

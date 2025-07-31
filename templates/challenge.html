@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Challenge Teams - CPL{% endblock %}
+
+{% block content %}
+<div class="challenge">
+    <h1>Challenge Teams</h1>
+    
+    <div class="challenge-info">
+        <div class="info-card">
+            <h3><i class="fas fa-info-circle"></i> Challenge Rules</h3>
+            <ul>
+                <li><strong>Rank Restriction:</strong> You can only challenge teams ranked 1-3 positions above you</li>
+                <li><strong>One Challenge Rule:</strong> You can only send one challenge at a time</li>
+                <li><strong>Match Completion:</strong> You must complete current matches before new challenges</li>
+                <li><strong>Consecutive Rule:</strong> Non-Platinum teams cannot challenge the same opponent twice in a row</li>
+                <li><strong>Team Availability:</strong> Teams become unavailable when they receive a challenge</li>
+                <li><strong>Pending Scores:</strong> Teams become unavailable if they have pending score entries from lower-ranked teams</li>
+                <li><strong>Challenge Expiry:</strong> Challenges expire after 24 hours</li>
+                <li><strong>Forfeit Penalty:</strong> Rejecting a challenge counts as a forfeit</li>
+                <li><strong>Admin Restriction:</strong> Admin accounts cannot participate in challenges</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Available Teams to Challenge -->
+    <div class="available-teams">
+        <h2><i class="fas fa-users"></i> Available Teams to Challenge</h2>
+        {% if teams %}
+        <div class="team-list">
+            {% for team in teams %}
+            <div class="team-card">
+                <div class="team-info">
+                    <h3>{{ team.team_name }}</h3>
+                    <p>{{ team.player1_name }} & {{ team.player2_name }}</p>
+                    <p><strong>Rank:</strong> {{ team.rank }} | <strong>Tier:</strong> {{ team.tier }}</p>
+                </div>
+                <div class="team-actions">
+                    <form method="POST" action="{{ url_for('challenge') }}" style="display: inline;">
+                        <input type="hidden" name="challenged_team_id" value="{{ team.id }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-fist-raised"></i> Challenge
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-teams">
+            <i class="fas fa-users-slash"></i>
+            <h3>No teams available for challenge</h3>
+            <p>No teams ranked higher than you (within 3 ranks above) are currently available for challenge.</p>
+            <p>Teams may be unavailable if they:</p>
+            <ul>
+                <li>Have received a challenge from another team</li>
+                <li>Have pending score entries from lower-ranked teams</li>
+                <li>Are not active in the league</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sent Challenges -->
+    {% if sent_challenges %}
+    <div class="sent-challenges">
+        <h2><i class="fas fa-paper-plane"></i> Sent Challenges</h2>
+        <div class="challenge-list">
+            {% for challenge in sent_challenges %}
+            <div class="challenge-card">
+                <div class="challenge-info">
+                    <h4>Challenging: {{ challenge.challenged_team.team_name }}</h4>
+                    <p>Sent on: {{ challenge.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    <p>Expires: {{ challenge.expires_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    <div class="countdown" data-expires="{{ challenge.expires_at.isoformat() }}">
+                        <span class="time-remaining"></span>
+                    </div>
+                </div>
+                <div class="challenge-status">
+                    <span class="status-badge status-pending">Pending Response</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Received Challenges -->
+    {% if received_challenges %}
+    <div class="received-challenges">
+        <h2><i class="fas fa-bell"></i> Received Challenges</h2>
+        <div class="challenge-list">
+            {% for challenge in received_challenges %}
+            <div class="challenge-card">
+                <div class="challenge-info">
+                    <h4>From: {{ challenge.challenging_team.team_name }}</h4>
+                    <p>Received on: {{ challenge.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    <p>Expires: {{ challenge.expires_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    <div class="countdown" data-expires="{{ challenge.expires_at.isoformat() }}">
+                        <span class="time-remaining"></span>
+                    </div>
+                </div>
+                <div class="challenge-actions">
+                    <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='accept') }}" class="btn btn-success">
+                        <i class="fas fa-check"></i> Accept
+                    </a>
+                    <a href="{{ url_for('respond_to_challenge', challenge_id=challenge.id, action='reject') }}" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Reject (Forfeit)
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.challenge-info {
+    margin-bottom: 30px;
+}
+
+.info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-card h3 i {
+    color: #667eea;
+}
+
+.info-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-card li {
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+    color: #666;
+}
+
+.info-card li:before {
+    content: '•';
+    color: #667eea;
+    position: absolute;
+    left: 0;
+}
+
+.available-teams, .sent-challenges, .received-challenges {
+    margin-bottom: 40px;
+}
+
+.available-teams h2, .sent-challenges h2, .received-challenges h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.available-teams h2 i, .sent-challenges h2 i, .received-challenges h2 i {
+    color: #667eea;
+}
+
+.team-list, .challenge-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.team-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.team-info h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.team-info p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+.team-actions {
+    text-align: right;
+}
+
+.challenge-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.challenge-info h4 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.challenge-info p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+.challenge-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.countdown {
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.countdown.expired {
+    color: #e53e3e;
+}
+
+.countdown.warning {
+    color: #f6ad55;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fbd38d;
+    color: #d69e2e;
+}
+
+.btn-success {
+    background: #38a169;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #2f855a;
+}
+
+.btn-danger {
+    background: #e53e3e;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c53030;
+}
+
+.no-teams {
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.no-teams i {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.no-teams h3 {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.no-teams p {
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .team-card, .challenge-card {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .team-actions, .challenge-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .challenge-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+// Countdown timer functionality
+function updateCountdowns() {
+    const countdowns = document.querySelectorAll('.countdown');
+    
+    countdowns.forEach(countdown => {
+        const expiresAt = new Date(countdown.dataset.expires);
+        const now = new Date();
+        const timeLeft = expiresAt - now;
+        
+        const timeRemainingSpan = countdown.querySelector('.time-remaining');
+        
+        if (timeLeft <= 0) {
+            timeRemainingSpan.textContent = 'EXPIRED';
+            countdown.classList.add('expired');
+        } else {
+            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            timeRemainingSpan.textContent = `${hours}h ${minutes}m ${seconds}s`;
+            
+            if (timeLeft < 3600000) { // Less than 1 hour
+                countdown.classList.add('warning');
+            }
+        }
+    });
+}
+
+// Update countdowns every second
+setInterval(updateCountdowns, 1000);
+updateCountdowns();
+</script>
+{% endblock %} 

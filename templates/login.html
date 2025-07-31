@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Login - CPL{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-tennis-ball auth-icon"></i>
+            <h1>Welcome to CPL</h1>
+            <p>Sign in to your Chiniot Padel League account</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+            <div class="form-group">
+                <label for="team_name">
+                    <i class="fas fa-users"></i>
+                    Team Name
+                </label>
+                <input type="text" id="team_name" name="team_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i>
+                    Password
+                </label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-full">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Don't have a team? <a href="{{ url_for('register') }}">Register here</a></p>
+        </div>
+        
+        <div class="demo-credentials">
+            <h4>Demo Credentials:</h4>
+            <p><strong>Admin:</strong> admin / admin123</p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

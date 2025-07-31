@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Tier Configuration{% endblock %}
+
+{% block content %}
+<div class="admin-tiers">
+    <div class="page-header">
+        <h1><i class="fas fa-trophy"></i> Tier Configuration</h1>
+        <p>Configure the rank boundaries for each tier. Teams will be automatically assigned to tiers based on their rank.</p>
+    </div>
+
+    <div class="tier-config-form">
+        <form method="POST" action="{{ url_for('admin_tiers') }}">
+            <div class="form-section">
+                <h3><i class="fas fa-crown"></i> Platinum Tier</h3>
+                <p>Elite teams - Top performers</p>
+                <div class="form-group">
+                    <label for="platinum_max">Maximum Rank for Platinum:</label>
+                    <input type="number" id="platinum_max" name="platinum_max" 
+                           value="{{ current_config.get('Platinum', 10) }}" 
+                           min="1" max="100" class="form-control">
+                    <small class="form-text text-muted">Ranks 1 to this number will be Platinum</small>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-medal"></i> Gold Tier</h3>
+                <p>Advanced teams - Strong competitors</p>
+                <div class="form-group">
+                    <label for="gold_max">Maximum Rank for Gold:</label>
+                    <input type="number" id="gold_max" name="gold_max" 
+                           value="{{ current_config.get('Gold', 30) }}" 
+                           min="1" max="100" class="form-control">
+                    <small class="form-text text-muted">Ranks (Platinum max + 1) to this number will be Gold</small>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-award"></i> Silver Tier</h3>
+                <p>Intermediate teams - Developing skills</p>
+                <div class="form-group">
+                    <label for="silver_max">Maximum Rank for Silver:</label>
+                    <input type="number" id="silver_max" name="silver_max" 
+                           value="{{ current_config.get('Silver', 60) }}" 
+                           min="1" max="100" class="form-control">
+                    <small class="form-text text-muted">Ranks (Gold max + 1) to this number will be Silver</small>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-star"></i> Bronze Tier</h3>
+                <p>Developing teams - New to the league</p>
+                <div class="form-group">
+                    <label for="bronze_max">Maximum Rank for Bronze:</label>
+                    <input type="number" id="bronze_max" name="bronze_max" 
+                           value="{{ current_config.get('Bronze', 999) }}" 
+                           min="1" max="1000" class="form-control">
+                    <small class="form-text text-muted">Ranks (Silver max + 1) and above will be Bronze</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update Tier Configuration
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-section">
+        <div class="info-card">
+            <h4><i class="fas fa-info-circle"></i> Tier Configuration Rules</h4>
+            <ul>
+                <li><strong>Ascending Order:</strong> Platinum max rank must be less than Gold max rank</li>
+                <li><strong>Gold max rank</strong> must be less than Silver max rank</li>
+                <li><strong>Silver max rank</strong> must be less than Bronze max rank</li>
+                <li><strong>Automatic Updates:</strong> All team tiers will be updated automatically</li>
+                <li><strong>Rank Assignment:</strong> New teams get the next available rank when approved</li>
+            </ul>
+        </div>
+
+        <div class="info-card">
+            <h4><i class="fas fa-chart-bar"></i> Current Tier Distribution</h4>
+            <div class="tier-stats">
+                <div class="tier-stat">
+                    <span class="tier-name platinum">Platinum</span>
+                    <span class="tier-count">{{ current_config.get('Platinum', 10) }} teams</span>
+                </div>
+                <div class="tier-stat">
+                    <span class="tier-name gold">Gold</span>
+                    <span class="tier-count">{{ current_config.get('Gold', 30) - current_config.get('Platinum', 10) }} teams</span>
+                </div>
+                <div class="tier-stat">
+                    <span class="tier-name silver">Silver</span>
+                    <span class="tier-count">{{ current_config.get('Silver', 60) - current_config.get('Gold', 30) }} teams</span>
+                </div>
+                <div class="tier-stat">
+                    <span class="tier-name bronze">Bronze</span>
+                    <span class="tier-count">Unlimited teams</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-tiers {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    color: #333;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.page-header p {
+    color: #666;
+    font-size: 1.1em;
+}
+
+.tier-config-form {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 10px;
+    background: #f8f9fa;
+}
+
+.form-section h3 {
+    color: #333;
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section h3 i {
+    color: #667eea;
+}
+
+.form-section p {
+    color: #666;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-text {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 10px;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.info-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.info-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h4 {
+    color: #333;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-card h4 i {
+    color: #667eea;
+}
+
+.info-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-card li {
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+    color: #666;
+}
+
+.info-card li:before {
+    content: '•';
+    color: #667eea;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.tier-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.tier-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.tier-name {
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.tier-name.platinum {
+    background: linear-gradient(135deg, #e5e4e2 0%, #b8860b 100%);
+    color: #333;
+}
+
+.tier-name.gold {
+    background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+    color: #333;
+}
+
+.tier-name.silver {
+    background: linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%);
+    color: #333;
+}
+
+.tier-name.bronze {
+    background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%);
+    color: white;
+}
+
+.tier-count {
+    font-weight: bold;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .admin-tiers {
+        padding: 15px;
+    }
+    
+    .tier-config-form {
+        padding: 20px;
+    }
+    
+    .info-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .tier-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %} 

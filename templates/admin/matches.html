@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Matches Management - CPL{% endblock %}
+
+{% block content %}
+<div class="admin">
+    <div class="admin-header">
+        <h1><i class="fas fa-table-tennis"></i> Matches Management</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="admin-filters">
+        <div class="filter-group">
+            <label for="status-filter">Filter by Status:</label>
+            <select id="status-filter" class="form-control">
+                <option value="">All Matches</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="played">Played</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="disputed">Disputed</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="score-filter">Filter by Score Approval:</label>
+            <select id="score-filter" class="form-control">
+                <option value="">All</option>
+                <option value="pending">Pending Approval</option>
+                <option value="approved">Approved</option>
+                <option value="disputed">Disputed</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="matches-table-container">
+        <table class="matches-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Teams</th>
+                    <th>Status</th>
+                    <th>Venue & Date</th>
+                    <th>Scores</th>
+                    <th>Winner</th>
+                    <th>Score Approval</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matches %}
+                <tr class="match-row" data-status="{{ match.status }}" data-score-approval="{% if match.score_approved is none %}pending{% elif match.score_approved %}approved{% else %}disputed{% endif %}">
+                    <td class="match-id">{{ match.id }}</td>
+                    <td class="teams">
+                        <div class="team-info">
+                            <strong>{{ match.team1.team_name }}</strong> (Rank {{ match.team1.rank }})
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team-info">
+                            <strong>{{ match.team2.team_name }}</strong> (Rank {{ match.team2.rank }})
+                        </div>
+                    </td>
+                    <td class="status">
+                        <span class="status-badge status-{{ match.status }}">
+                            {% if match.status == 'scheduled' %}
+                                <i class="fas fa-calendar"></i> Scheduled
+                            {% elif match.status == 'played' %}
+                                <i class="fas fa-play"></i> Played
+                            {% elif match.status == 'confirmed' %}
+                                <i class="fas fa-check-circle"></i> Confirmed
+                            {% elif match.status == 'disputed' %}
+                                <i class="fas fa-exclamation-triangle"></i> Disputed
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="venue-date">
+                        {% if match.venue %}
+                            <div><strong>Venue:</strong> {{ match.venue }}</div>
+                        {% endif %}
+                        {% if match.date %}
+                            <div><strong>Date:</strong> {{ match.date.strftime('%Y-%m-%d %H:%M') }}</div>
+                        {% endif %}
+                        {% if not match.venue and not match.date %}
+                            <span class="no-info">Not set</span>
+                        {% endif %}
+                    </td>
+                    <td class="scores">
+                        {% if match.set1_team1_score is not none %}
+                            <div class="score-set">
+                                Set 1: {{ match.set1_team1_score }}-{{ match.set1_team2_score }}
+                            </div>
+                            {% if match.set2_team1_score is not none %}
+                                <div class="score-set">
+                                    Set 2: {{ match.set2_team1_score }}-{{ match.set2_team2_score }}
+                                </div>
+                            {% endif %}
+                            {% if match.set3_team1_score is not none %}
+                                <div class="score-set">
+                                    Set 3: {{ match.set3_team1_score }}-{{ match.set3_team2_score }}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <span class="no-scores">No scores entered</span>
+                        {% endif %}
+                    </td>
+                    <td class="winner">
+                        {% if match.winner_id %}
+                            {% if match.winner_id == match.team1_id %}
+                                <span class="winner-badge">{{ match.team1.team_name }}</span>
+                            {% else %}
+                                <span class="winner-badge">{{ match.team2.team_name }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="no-winner">Not determined</span>
+                        {% endif %}
+                    </td>
+                    <td class="score-approval">
+                        {% if match.score_approved is none %}
+                            <span class="approval-badge approval-pending">
+                                <i class="fas fa-clock"></i> Pending
+                            </span>
+                        {% elif match.score_approved %}
+                            <span class="approval-badge approval-approved">
+                                <i class="fas fa-check"></i> Approved
+                            </span>
+                        {% else %}
+                            <span class="approval-badge approval-disputed">
+                                <i class="fas fa-times"></i> Disputed
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="created">
+                        {{ match.created_at.strftime('%Y-%m-%d') }}
+                    </td>
+                    <td class="actions">
+                        <div class="action-buttons">
+                            <a href="{{ url_for('admin_edit_match', match_id=match.id) }}" class="btn btn-sm btn-primary" title="Edit Match">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            
+                            {% if match.status == 'scheduled' %}
+                            <form method="POST" action="{{ url_for('admin_force_complete_match', match_id=match.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-success" title="Force Complete" onclick="return confirm('Force complete this match?')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if match.status == 'played' %}
+                            <form method="POST" action="{{ url_for('admin_reset_match', match_id=match.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-warning" title="Reset Match" onclick="return confirm('Reset this match to scheduled status?')">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if match.status != 'played' and match.status != 'confirmed' %}
+                            <form method="POST" action="{{ url_for('admin_delete_match', match_id=match.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete Match" onclick="return confirm('Delete this match? This action cannot be undone.')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <h3>Total Matches</h3>
+            <p class="stat-number">{{ matches|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Scheduled</h3>
+            <p class="stat-number">{{ matches|selectattr('status', 'equalto', 'scheduled')|list|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Played</h3>
+            <p class="stat-number">{{ matches|selectattr('status', 'equalto', 'played')|list|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Confirmed</h3>
+            <p class="stat-number">{{ matches|selectattr('status', 'equalto', 'confirmed')|list|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Pending Approval</h3>
+            <p class="stat-number">{{ matches|selectattr('score_approved', 'equalto', None)|list|length }}</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('status-filter');
+    const scoreFilter = document.getElementById('score-filter');
+    const matchRows = document.querySelectorAll('.match-row');
+
+    function filterMatches() {
+        const statusValue = statusFilter.value;
+        const scoreValue = scoreFilter.value;
+
+        matchRows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const scoreApproval = row.getAttribute('data-score-approval');
+            
+            const statusMatch = !statusValue || status === statusValue;
+            const scoreMatch = !scoreValue || scoreApproval === scoreValue;
+            
+            if (statusMatch && scoreMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    statusFilter.addEventListener('change', filterMatches);
+    scoreFilter.addEventListener('change', filterMatches);
+});
+</script>
+
+<style>
+.matches-table-container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.matches-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.matches-table th {
+    background: #f8fafc;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.matches-table td {
+    padding: 15px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+}
+
+.matches-table tr:hover {
+    background: #f8fafc;
+}
+
+.match-id {
+    font-weight: bold;
+    color: #667eea;
+}
+
+.teams {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.team-info {
+    font-size: 14px;
+}
+
+.vs {
+    font-weight: bold;
+    color: #667eea;
+    text-align: center;
+    font-size: 12px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-scheduled {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-played {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-confirmed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-disputed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.venue-date {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.no-info {
+    color: #999;
+    font-style: italic;
+}
+
+.scores {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.score-set {
+    margin-bottom: 2px;
+}
+
+.no-scores {
+    color: #999;
+    font-style: italic;
+}
+
+.winner-badge {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.no-winner {
+    color: #999;
+    font-style: italic;
+}
+
+.approval-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.approval-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.approval-approved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.approval-disputed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+@media (max-width: 768px) {
+    .matches-table-container {
+        overflow-x: auto;
+    }
+    
+    .admin-filters {
+        flex-direction: column;
+    }
+    
+    .admin-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - CPL{% endblock %}
+
+{% block content %}
+<div class="admin">
+    <h1>Admin Dashboard</h1>
+    
+    <div class="admin-grid">
+        <div class="admin-card">
+            <h3><i class="fas fa-user-plus"></i> Pending Registrations</h3>
+            <div class="card-content">
+                <p class="count">{{ pending_registrations|length }}</p>
+                <p>Teams waiting for approval</p>
+                {% if pending_registrations %}
+                <div class="action-list">
+                    {% for team in pending_registrations %}
+                    <div class="action-item">
+                        <div class="item-info">
+                            <strong>{{ team.team_name }}</strong>
+                            <small>{{ team.player1_name }} & {{ team.player2_name }}</small>
+                        </div>
+                        <div class="item-actions">
+                            <a href="{{ url_for('admin_registration_action', team_id=team.id, action='approve') }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-check"></i> Approve
+                            </a>
+                            <a href="{{ url_for('admin_registration_action', team_id=team.id, action='reject') }}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-times"></i> Reject
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-snowflake"></i> Freeze Requests</h3>
+            <div class="card-content">
+                <p class="count">{{ pending_freeze_requests|length }}</p>
+                <p>Teams requesting freeze</p>
+                {% if pending_freeze_requests %}
+                <div class="action-list">
+                    {% for request in pending_freeze_requests %}
+                    <div class="action-item">
+                        <div class="item-info">
+                            <strong>{{ request.team.team_name }}</strong>
+                            <small>{{ request.reason[:50] }}{% if request.reason|length > 50 %}...{% endif %}</small>
+                        </div>
+                        <div class="item-actions">
+                            <a href="#" class="btn btn-sm btn-success">
+                                <i class="fas fa-check"></i> Approve
+                            </a>
+                            <a href="#" class="btn btn-sm btn-danger">
+                                <i class="fas fa-times"></i> Reject
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-exclamation-triangle"></i> Disputed Matches</h3>
+            <div class="card-content">
+                <p class="count">{{ disputed_matches|length }}</p>
+                <p>Matches requiring admin resolution</p>
+                {% if disputed_matches %}
+                <div class="action-list">
+                    {% for match in disputed_matches %}
+                    <div class="action-item">
+                        <div class="item-info">
+                            <strong>{{ match.team1.team_name }} vs {{ match.team2.team_name }}</strong>
+                            <small>Score disputed - requires admin review</small>
+                        </div>
+                        <div class="item-actions">
+                            <a href="{{ url_for('admin_enter_score', match_id=match.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-gavel"></i> Review Score
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-clock"></i> Pending Score Approvals</h3>
+            <div class="card-content">
+                <p class="count">{{ pending_score_approvals|length }}</p>
+                <p>Matches waiting for opponent approval</p>
+                {% if pending_score_approvals %}
+                <div class="action-list">
+                    {% for match in pending_score_approvals %}
+                    <div class="action-item">
+                        <div class="item-info">
+                            <strong>{{ match.team1.team_name }} vs {{ match.team2.team_name }}</strong>
+                            <small>Score entered by {{ match.team1.team_name if match.score_entered_by == match.team1_id else match.team2.team_name }}</small>
+                        </div>
+                        <div class="item-actions">
+                            <span class="status-pending">Waiting for approval</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-fist-raised"></i> Pending Challenges</h3>
+            <div class="card-content">
+                <p class="count">{{ pending_challenges|length }}</p>
+                <p>Challenges waiting for response</p>
+                {% if pending_challenges %}
+                <div class="action-list">
+                    {% for challenge in pending_challenges %}
+                    <div class="action-item">
+                        <div class="item-info">
+                            <strong>{{ challenge.challenging_team.team_name }} → {{ challenge.challenged_team.team_name }}</strong>
+                            <small>Rank {{ challenge.challenging_team.rank }} challenging Rank {{ challenge.challenged_team.rank }}</small>
+                        </div>
+                        <div class="item-actions">
+                            <span class="status-pending">Pending Response</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-ban"></i> Unavailable Teams (Pending Scores)</h3>
+            <div class="card-content">
+                <p class="count">{{ teams_with_pending_scores|length }}</p>
+                <p>Teams unavailable due to pending score entries</p>
+                {% if teams_with_pending_scores %}
+                <div class="action-list">
+                    {% for team_data in teams_with_pending_scores %}
+                    <div class="action-item">
+                        <div class="item-info">
+                            <strong>{{ team_data.team.team_name }} (Rank {{ team_data.team.rank }})</strong>
+                            <small>{{ team_data.pending_matches|length }} pending score{{ 's' if team_data.pending_matches|length != 1 }}</small>
+                        </div>
+                        <div class="item-actions">
+                            <span class="status-unavailable">Unavailable</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-bell"></i> Teams with Received Challenges</h3>
+            <div class="card-content">
+                <p class="count">{{ teams_with_challenges|length }}</p>
+                <p>Teams that have received challenges</p>
+                {% if teams_with_challenges %}
+                <div class="action-list">
+                    {% for team_data in teams_with_challenges %}
+                    <div class="action-item">
+                        <div class="item-info">
+                            <strong>{{ team_data.team.team_name }} (Rank {{ team_data.team.rank }})</strong>
+                            <small>{{ team_data.challenges|length }} challenge{{ 's' if team_data.challenges|length != 1 }} received</small>
+                        </div>
+                        <div class="item-actions">
+                            <span class="status-challenged">Challenged</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-chart-bar"></i> League Statistics</h3>
+            <div class="card-content">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ teams|length }}</span>
+                        <span class="stat-label">Total Teams</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ active_teams|length }}</span>
+                        <span class="stat-label">Active Teams</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ total_matches }}</span>
+                        <span class="stat-label">Total Matches</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ pending_challenges_count }}</span>
+                        <span class="stat-label">Pending Challenges</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ teams_with_pending_scores|length + teams_with_challenges|length }}</span>
+                        <span class="stat-label">Unavailable Teams</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-cog"></i> League Management</h3>
+            <div class="card-content">
+                <div class="action-buttons">
+                    <a href="{{ url_for('admin_teams') }}" class="btn btn-primary">
+                        <i class="fas fa-users"></i> Manage Teams
+                    </a>
+                    <a href="{{ url_for('admin_rankings') }}" class="btn btn-primary">
+                        <i class="fas fa-list-ol"></i> Manage Rankings
+                    </a>
+                    <a href="{{ url_for('admin_matches') }}" class="btn btn-primary">
+                        <i class="fas fa-table-tennis"></i> Manage Matches
+                    </a>
+                    <a href="{{ url_for('admin_challenges') }}" class="btn btn-primary">
+                        <i class="fas fa-fist-raised"></i> View Challenges
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-tools"></i> System Configuration</h3>
+            <div class="card-content">
+                <div class="action-buttons">
+                    <a href="{{ url_for('admin_tiers') }}" class="btn btn-primary">
+                        <i class="fas fa-trophy"></i> Configure Tiers
+                    </a>
+                    <a href="{{ url_for('admin_export') }}" class="btn btn-success">
+                        <i class="fas fa-download"></i> Export Data
+                    </a>
+                    <a href="{{ url_for('analytics') }}" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> View Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-chart-line"></i> Quick Statistics</h3>
+            <div class="card-content">
+                <div class="stats-overview">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ pending_registrations|length }}</div>
+                        <div class="stat-label">Pending Registrations</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ pending_challenges|length }}</div>
+                        <div class="stat-label">Pending Challenges</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ disputed_matches|length }}</div>
+                        <div class="stat-label">Disputed Matches</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ pending_score_approvals|length }}</div>
+                        <div class="stat-label">Score Approvals</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.admin-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.admin-card h3 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-card h3 i {
+    color: #667eea;
+}
+
+.card-content {
+    color: #666;
+}
+
+.count {
+    font-size: 32px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 5px;
+}
+
+.action-list {
+    margin-top: 15px;
+}
+
+.action-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.action-item:last-child {
+    border-bottom: none;
+}
+
+.item-info strong {
+    display: block;
+    color: #333;
+    font-size: 14px;
+}
+
+.item-info small {
+    color: #999;
+    font-size: 12px;
+}
+
+.item-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.action-buttons .btn {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.activity-item i {
+    color: #667eea;
+    font-size: 16px;
+}
+
+.activity-content strong {
+    display: block;
+    color: #333;
+    font-size: 14px;
+}
+
+.activity-content small {
+    color: #999;
+    font-size: 12px;
+}
+
+.status-pending {
+    color: #f6ad55;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.status-unavailable {
+    color: #e53e3e;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.status-challenged {
+    color: #3182ce;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .item-actions {
+        width: 100%;
+    }
+    
+    .item-actions .btn {
+        flex: 1;
+    }
+}
+</style>
+{% endblock %} 

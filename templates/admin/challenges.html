@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Challenges - CPL Admin{% endblock %}
+
+{% block content %}
+<div class="admin-challenges">
+    <h1><i class="fas fa-fist-raised"></i> Manage Challenges</h1>
+    
+    <div class="challenges-info">
+        <div class="info-card">
+            <h3><i class="fas fa-info-circle"></i> Challenge System Overview</h3>
+            <ul>
+                <li><strong>{{ challenges|length }}</strong> total challenges in system</li>
+                <li><strong>{{ challenges|selectattr('status', 'equalto', 'pending')|list|length }}</strong> pending challenges</li>
+                <li><strong>{{ challenges|selectattr('status', 'equalto', 'accepted')|list|length }}</strong> accepted challenges</li>
+                <li><strong>{{ challenges|selectattr('status', 'equalto', 'rejected')|list|length }}</strong> rejected challenges</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="challenges-filters">
+        <button class="filter-btn active" data-filter="all">All Challenges</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="accepted">Accepted</button>
+        <button class="filter-btn" data-filter="rejected">Rejected</button>
+        <button class="filter-btn" data-filter="expired">Expired</button>
+    </div>
+    
+    <div class="challenges-list">
+        {% for challenge in challenges %}
+        <div class="challenge-card" data-status="{{ challenge.status }}">
+            <div class="challenge-header">
+                <div class="challenge-teams">
+                    <span class="challenging-team">{{ challenge.challenging_team.team_name }}</span>
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="challenged-team">{{ challenge.challenged_team.team_name }}</span>
+                </div>
+                <div class="challenge-status">
+                    <span class="status-badge status-{{ challenge.status }}">{{ challenge.status|title }}</span>
+                </div>
+            </div>
+            
+            <div class="challenge-details">
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <strong>Ranks:</strong> {{ challenge.challenging_team.rank }} → {{ challenge.challenged_team.rank }}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Created:</strong> {{ challenge.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </div>
+                </div>
+                
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <strong>Expires:</strong> {{ challenge.expires_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Time Remaining:</strong> 
+                        <span class="countdown" data-expires="{{ challenge.expires_at.isoformat() }}">
+                            {% if challenge.status == 'pending' %}
+                                <span class="time-remaining"></span>
+                            {% else %}
+                                Expired
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                {% if challenge.match_id %}
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <strong>Match:</strong> 
+                        <a href="#" class="match-link">View Match #{{ challenge.match_id }}</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="challenge-actions">
+                {% if challenge.status == 'pending' %}
+                <div class="action-buttons">
+                    <span class="status-pending">Waiting for {{ challenge.challenged_team.team_name }} to respond</span>
+                    <div class="admin-actions">
+                        <a href="{{ url_for('admin_edit_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-primary" title="Edit Challenge">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_force_accept_challenge', challenge_id=challenge.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-success" title="Force Accept" onclick="return confirm('Force accept this challenge?')">
+                                <i class="fas fa-check"></i> Accept
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin_force_reject_challenge', challenge_id=challenge.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-warning" title="Force Reject" onclick="return confirm('Force reject this challenge?')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin_delete_challenge', challenge_id=challenge.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Delete Challenge" onclick="return confirm('Delete this challenge? This action cannot be undone.')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% elif challenge.status == 'accepted' %}
+                <div class="action-buttons">
+                    <span class="status-success">Challenge accepted - match created</span>
+                    <div class="admin-actions">
+                        <a href="{{ url_for('admin_edit_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-primary" title="Edit Challenge">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    </div>
+                </div>
+                {% elif challenge.status == 'rejected' %}
+                <div class="action-buttons">
+                    <span class="status-rejected">Challenge rejected (forfeit)</span>
+                    <div class="admin-actions">
+                        <a href="{{ url_for('admin_edit_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-primary" title="Edit Challenge">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    </div>
+                </div>
+                {% elif challenge.status == 'expired' %}
+                <div class="action-buttons">
+                    <span class="status-expired">Challenge expired</span>
+                    <div class="admin-actions">
+                        <a href="{{ url_for('admin_edit_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-primary" title="Edit Challenge">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_delete_challenge', challenge_id=challenge.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Delete Challenge" onclick="return confirm('Delete this challenge? This action cannot be undone.')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if not challenges %}
+    <div class="no-challenges">
+        <i class="fas fa-inbox"></i>
+        <h3>No Challenges Found</h3>
+        <p>There are no challenges in the system yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.admin-challenges {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.challenges-info {
+    margin-bottom: 30px;
+}
+
+.info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-card h3 i {
+    color: #667eea;
+}
+
+.info-card ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.info-card li {
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 8px;
+    color: #666;
+}
+
+.challenges-filters {
+    margin-bottom: 30px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.filter-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.filter-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+.challenges-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.challenge-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.challenge-header {
+    padding: 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.challenge-teams {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.challenge-teams i {
+    color: #667eea;
+}
+
+.challenge-details {
+    padding: 20px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-item {
+    color: #666;
+}
+
+.challenge-actions {
+    padding: 20px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-accepted {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-expired {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-success {
+    color: #065f46;
+    font-weight: bold;
+}
+
+.status-rejected {
+    color: #991b1b;
+    font-weight: bold;
+}
+
+.status-expired {
+    color: #6b7280;
+    font-weight: bold;
+}
+
+.admin-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-actions .btn {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+.no-challenges {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.no-challenges i {
+    font-size: 48px;
+    color: #d1d5db;
+    margin-bottom: 20px;
+}
+
+.no-challenges h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .challenge-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .challenges-filters {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const challengeCards = document.querySelectorAll('.challenge-card');
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            
+            // Update active button
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter cards
+            challengeCards.forEach(card => {
+                if (filter === 'all' || card.dataset.status === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+    
+    // Countdown functionality
+    const countdowns = document.querySelectorAll('.countdown');
+    countdowns.forEach(countdown => {
+        const expiresAt = new Date(countdown.dataset.expires);
+        const timeRemaining = countdown.querySelector('.time-remaining');
+        
+        function updateCountdown() {
+            const now = new Date();
+            const diff = expiresAt - now;
+            
+            if (diff <= 0) {
+                timeRemaining.textContent = 'Expired';
+                return;
+            }
+            
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            timeRemaining.textContent = `${hours}h ${minutes}m`;
+        }
+        
+        updateCountdown();
+        setInterval(updateCountdown, 60000); // Update every minute
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Challenge - Admin{% endblock %}
+
+{% block content %}
+<div class="admin">
+    <div class="admin-header">
+        <h1><i class="fas fa-edit"></i> Edit Challenge</h1>
+        <a href="{{ url_for('admin_challenges') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Challenges
+        </a>
+    </div>
+
+    <div class="edit-form-container">
+        <div class="challenge-info">
+            <h3>Challenge Details</h3>
+            <div class="challenge-summary">
+                <div class="teams">
+                    <span class="challenging-team">{{ challenge.challenging_team.team_name }}</span>
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="challenged-team">{{ challenge.challenged_team.team_name }}</span>
+                </div>
+                <div class="ranks">
+                    Rank {{ challenge.challenging_team.rank }} → Rank {{ challenge.challenged_team.rank }}
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" class="edit-form">
+            <div class="form-section">
+                <h3>Challenge Settings</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status" required class="form-control">
+                            <option value="pending" {% if challenge.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="accepted" {% if challenge.status == 'accepted' %}selected{% endif %}>Accepted</option>
+                            <option value="rejected" {% if challenge.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            <option value="expired" {% if challenge.status == 'expired' %}selected{% endif %}>Expired</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expires_at">Expiration Date & Time</label>
+                        <input type="datetime-local" id="expires_at" name="expires_at" 
+                               value="{{ challenge.expires_at.strftime('%Y-%m-%dT%H:%M') }}" 
+                               required class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Challenge Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Created:</label>
+                        <span>{{ challenge.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Current Status:</label>
+                        <span class="status-badge status-{{ challenge.status }}">{{ challenge.status|title }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Challenging Team:</label>
+                        <span>{{ challenge.challenging_team.team_name }} (Rank {{ challenge.challenging_team.rank }})</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Challenged Team:</label>
+                        <span>{{ challenge.challenged_team.team_name }} (Rank {{ challenge.challenged_team.rank }})</span>
+                    </div>
+                    {% if challenge.match_id %}
+                    <div class="info-item">
+                        <label>Match ID:</label>
+                        <span>{{ challenge.match_id }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ url_for('admin_challenges') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.edit-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.challenge-info {
+    padding: 2rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+}
+
+.challenge-info h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.challenge-summary {
+    text-align: center;
+}
+
+.teams {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.teams i {
+    color: #007bff;
+}
+
+.ranks {
+    color: #666;
+    font-size: 1rem;
+}
+
+.edit-form {
+    padding: 2rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section h3 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: #555;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-accepted {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-expired {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .teams {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+{% endblock %} 

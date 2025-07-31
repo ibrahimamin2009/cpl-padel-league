@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Register Team - CPL{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-users auth-icon"></i>
+            <h1>Register Your Team</h1>
+            <p>Join the Chiniot Padel League with your partner</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+            <div class="form-group">
+                <label for="team_name">
+                    <i class="fas fa-trophy"></i>
+                    Team Name
+                </label>
+                <input type="text" id="team_name" name="team_name" required>
+            </div>
+            
+            <div class="player-section">
+                <h3><i class="fas fa-user"></i> Player 1</h3>
+                <div class="form-group">
+                    <label for="player1_name">
+                        <i class="fas fa-id-card"></i>
+                        Player 1 Name
+                    </label>
+                    <input type="text" id="player1_name" name="player1_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="player1_email">
+                        <i class="fas fa-envelope"></i>
+                        Player 1 Email
+                    </label>
+                    <input type="email" id="player1_email" name="player1_email" required>
+                </div>
+            </div>
+            
+            <div class="player-section">
+                <h3><i class="fas fa-user"></i> Player 2</h3>
+                <div class="form-group">
+                    <label for="player2_name">
+                        <i class="fas fa-id-card"></i>
+                        Player 2 Name
+                    </label>
+                    <input type="text" id="player2_name" name="player2_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="player2_email">
+                        <i class="fas fa-envelope"></i>
+                        Player 2 Email
+                    </label>
+                    <input type="email" id="player2_email" name="player2_email" required>
+                </div>
+            </div>
+            
+            <div class="password-section">
+                <h3><i class="fas fa-lock"></i> Team Password</h3>
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        Password
+                    </label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">
+                        <i class="fas fa-lock"></i>
+                        Confirm Password
+                    </label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-full">
+                <i class="fas fa-user-plus"></i>
+                Register Team
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have a team? <a href="{{ url_for('login') }}">Sign in here</a></p>
+        </div>
+        
+        <div class="registration-info">
+            <h4><i class="fas fa-info-circle"></i> Registration Process</h4>
+            <ul>
+                <li><i class="fas fa-clock"></i> Your registration will be reviewed by admin</li>
+                <li><i class="fas fa-check-circle"></i> You'll receive notification when approved</li>
+                <li><i class="fas fa-trophy"></i> Approved teams get assigned rank and tier</li>
+                <li><i class="fas fa-users"></i> You can then participate in league activities</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

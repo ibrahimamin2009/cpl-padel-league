@@ -1,0 +1,556 @@
+{% extends "base.html" %}
+
+{% block title %}Matches - CPL{% endblock %}
+
+{% block content %}
+<div class="matches">
+    <h1><i class="fas fa-tennis-ball"></i> Matches</h1>
+    
+    {% if current_user %}
+    <div class="user-matches">
+        <h2><i class="fas fa-user"></i> My Team Matches</h2>
+        {% if matches %}
+        <div class="match-list">
+            {% for match in matches %}
+            <div class="match-card">
+                <div class="match-teams">
+                    <div class="team team1 {% if match.winner_id == match.team1_id %}winner{% endif %}">
+                        <h3>{{ match.team1.team_name }}</h3>
+                        {% if match.set1_team1_score is not none %}
+                        <div class="score">{{ match.set1_team1_score }}-{{ match.set1_team2_score }}, {{ match.set2_team1_score }}-{{ match.set2_team2_score }}{% if match.set3_team1_score is not none %}, {{ match.set3_team1_score }}-{{ match.set3_team2_score }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="team team2 {% if match.winner_id == match.team2_id %}winner{% endif %}">
+                        <h3>{{ match.team2.team_name }}</h3>
+                        {% if match.set1_team1_score is not none %}
+                        <div class="score">{{ match.set1_team2_score }}-{{ match.set1_team1_score }}, {{ match.set2_team2_score }}-{{ match.set2_team1_score }}{% if match.set3_team2_score is not none %}, {{ match.set3_team2_score }}-{{ match.set3_team1_score }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="match-details">
+                    <div class="match-info">
+                        <p><strong>Status:</strong> 
+                            {% if match.status == 'scheduled' %}
+                                <span class="status-scheduled">Scheduled</span>
+                            {% elif match.status == 'confirmed' %}
+                                <span class="status-confirmed">Completed</span>
+                            {% else %}
+                                <span class="status-pending">Pending</span>
+                            {% endif %}
+                        </p>
+                        {% if match.venue %}
+                        <p><strong>Venue:</strong> {{ match.venue }}</p>
+                        {% endif %}
+                        {% if match.date %}
+                        <p><strong>Date:</strong> {{ match.date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        {% endif %}
+                        {% if match.match_deadline and match.status == 'scheduled' %}
+                        <p><strong>Match Deadline:</strong> <span class="deadline {% if is_deadline_expired(match.match_deadline) %}expired{% endif %}">{{ match.match_deadline.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
+                        {% endif %}
+                        {% if match.score_deadline and match.status == 'played' %}
+                        <p><strong>Score Deadline:</strong> <span class="deadline {% if is_deadline_expired(match.score_deadline) %}expired{% endif %}">{{ match.score_deadline.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
+                        {% endif %}
+                        {% if match.winner_id %}
+                        <p><strong>Winner:</strong> 
+                            {% if match.winner_id == match.team1_id %}
+                                {{ match.team1.team_name }}
+                            {% else %}
+                                {{ match.team2.team_name }}
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="match-actions">
+                        {% if match.status == 'scheduled' %}
+                            {% if current_user.id in [match.team1_id, match.team2_id] %}
+
+                                
+                                {% if not match.venue and not match.proposed_venue %}
+                                    <a href="{{ url_for('propose_venue', match_id=match.id) }}" class="btn btn-primary">
+                                        <i class="fas fa-map-marker-alt"></i> Propose Venue
+                                    </a>
+                                {% elif match.proposed_venue %}
+                                    {% if match.proposed_by != current_user.id %}
+                                        <div class="venue-proposal">
+                                            <p><strong>Proposed:</strong> {{ match.proposed_venue }} on {{ match.proposed_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                            <div class="proposal-actions">
+                                                <a href="{{ url_for('respond_venue', match_id=match.id, action='approve') }}" class="btn btn-success">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </a>
+                                                <a href="{{ url_for('respond_venue', match_id=match.id, action='reject') }}" class="btn btn-warning">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="venue-proposal">
+                                            <p><strong>You proposed:</strong> {{ match.proposed_venue }} on {{ match.proposed_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                            <p>Waiting for opponent approval...</p>
+                                        </div>
+                                    {% endif %}
+                                {% elif match.venue %}
+                                    <a href="{{ url_for('enter_score', match_id=match.id) }}" class="btn btn-primary">
+                                        <i class="fas fa-trophy"></i> Enter Score
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        {% elif match.status == 'played' and current_user.id in [match.team1_id, match.team2_id] %}
+                            {% if match.score_entered_by != current_user.id %}
+                                <div class="score-approval">
+                                    <p><strong>Score entered by:</strong> 
+                                        {% if match.score_entered_by == match.team1_id %}
+                                            {{ match.team1.team_name }}
+                                        {% else %}
+                                            {{ match.team2.team_name }}
+                                        {% endif %}
+                                    </p>
+                                    <div class="approval-actions">
+                                        <a href="{{ url_for('respond_score', match_id=match.id, action='approve') }}" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Approve Score
+                                        </a>
+                                        <a href="{{ url_for('respond_score', match_id=match.id, action='reject') }}" class="btn btn-warning">
+                                            <i class="fas fa-times"></i> Reject Score
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="score-waiting">
+                                    <p><i class="fas fa-clock"></i> Waiting for opponent to approve your score entry...</p>
+                                </div>
+                            {% endif %}
+                        {% elif match.status == 'disputed' and current_user.is_admin %}
+                            <a href="{{ url_for('admin_enter_score', match_id=match.id) }}" class="btn btn-primary">
+                                <i class="fas fa-gavel"></i> Admin Review Score
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-matches">
+            <i class="fas fa-inbox"></i>
+            <h3>No matches yet</h3>
+            <p>Start by challenging other teams!</p>
+            <a href="{{ url_for('challenge') }}" class="btn btn-primary">
+                <i class="fas fa-fist-raised"></i> Send Challenge
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="all-matches">
+        <h2><i class="fas fa-globe"></i> All League Matches</h2>
+        {% if all_matches %}
+        <div class="match-list">
+            {% for match in all_matches %}
+            <div class="match-card">
+                <div class="match-teams">
+                    <div class="team team1 {% if match.winner_id == match.team1_id %}winner{% endif %}">
+                        <h3>{{ match.team1.team_name }}</h3>
+                        {% if match.set1_team1_score is not none %}
+                        <div class="score">{{ match.set1_team1_score }}-{{ match.set1_team2_score }}, {{ match.set2_team1_score }}-{{ match.set2_team2_score }}{% if match.set3_team1_score is not none %}, {{ match.set3_team1_score }}-{{ match.set3_team2_score }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="team team2 {% if match.winner_id == match.team2_id %}winner{% endif %}">
+                        <h3>{{ match.team2.team_name }}</h3>
+                        {% if match.set1_team1_score is not none %}
+                        <div class="score">{{ match.set1_team2_score }}-{{ match.set1_team1_score }}, {{ match.set2_team2_score }}-{{ match.set2_team1_score }}{% if match.set3_team2_score is not none %}, {{ match.set3_team2_score }}-{{ match.set3_team1_score }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="match-details">
+                    <div class="match-info">
+                        <p><strong>Status:</strong> 
+                            {% if match.status == 'scheduled' %}
+                                <span class="status-scheduled">Scheduled</span>
+                            {% elif match.status == 'confirmed' %}
+                                <span class="status-confirmed">Completed</span>
+                            {% else %}
+                                <span class="status-pending">Pending</span>
+                            {% endif %}
+                        </p>
+                        {% if match.venue %}
+                        <p><strong>Venue:</strong> {{ match.venue }}</p>
+                        {% endif %}
+                        {% if match.date %}
+                        <p><strong>Date:</strong> {{ match.date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        {% endif %}
+                        {% if match.match_deadline and match.status == 'scheduled' %}
+                        <p><strong>Match Deadline:</strong> <span class="deadline {% if is_deadline_expired(match.match_deadline) %}expired{% endif %}">{{ match.match_deadline.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
+                        {% endif %}
+                        {% if match.score_deadline and match.status == 'played' %}
+                        <p><strong>Score Deadline:</strong> <span class="deadline {% if is_deadline_expired(match.score_deadline) %}expired{% endif %}">{{ match.score_deadline.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
+                        {% endif %}
+                        {% if match.winner_id %}
+                        <p><strong>Winner:</strong> 
+                            {% if match.winner_id == match.team1_id %}
+                                {{ match.team1.team_name }}
+                            {% else %}
+                                {{ match.team2.team_name }}
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-matches">
+            <i class="fas fa-inbox"></i>
+            <h3>No matches yet</h3>
+            <p>No matches have been played in the league yet.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <!-- Public view -->
+    <div class="all-matches">
+        <h2><i class="fas fa-globe"></i> All League Matches</h2>
+        {% if matches %}
+        <div class="match-list">
+            {% for match in matches %}
+            <div class="match-card">
+                <div class="match-teams">
+                    <div class="team team1 {% if match.winner_id == match.team1_id %}winner{% endif %}">
+                        <h3>{{ match.team1.team_name }}</h3>
+                        {% if match.set1_team1_score is not none %}
+                        <div class="score">{{ match.set1_team1_score }}-{{ match.set1_team2_score }}, {{ match.set2_team1_score }}-{{ match.set2_team2_score }}{% if match.set3_team1_score is not none %}, {{ match.set3_team1_score }}-{{ match.set3_team2_score }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="team team2 {% if match.winner_id == match.team2_id %}winner{% endif %}">
+                        <h3>{{ match.team2.team_name }}</h3>
+                        {% if match.set1_team1_score is not none %}
+                        <div class="score">{{ match.set1_team2_score }}-{{ match.set1_team1_score }}, {{ match.set2_team2_score }}-{{ match.set2_team1_score }}{% if match.set3_team2_score is not none %}, {{ match.set3_team2_score }}-{{ match.set3_team1_score }}{% endif %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="match-details">
+                    <div class="match-info">
+                        <p><strong>Status:</strong> 
+                            {% if match.status == 'scheduled' %}
+                                <span class="status-scheduled">Scheduled</span>
+                            {% elif match.status == 'confirmed' %}
+                                <span class="status-confirmed">Completed</span>
+                            {% else %}
+                                <span class="status-pending">Pending</span>
+                            {% endif %}
+                        </p>
+                        {% if match.venue %}
+                        <p><strong>Venue:</strong> {{ match.venue }}</p>
+                        {% endif %}
+                        {% if match.date %}
+                        <p><strong>Date:</strong> {{ match.date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        {% endif %}
+                        {% if match.winner_id %}
+                        <p><strong>Winner:</strong> 
+                            {% if match.winner_id == match.team1_id %}
+                                {{ match.team1.team_name }}
+                            {% else %}
+                                {{ match.team2.team_name }}
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-matches">
+            <i class="fas fa-inbox"></i>
+            <h3>No matches yet</h3>
+            <p>No matches have been played in the league yet.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.matches {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.matches h1 {
+    color: #333;
+    font-size: 28px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.matches h1 i {
+    color: #667eea;
+}
+
+.user-matches, .all-matches {
+    margin-bottom: 40px;
+}
+
+.user-matches h2, .all-matches h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-matches h2 i, .all-matches h2 i {
+    color: #667eea;
+}
+
+.match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.match-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.match-teams {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.team {
+    flex: 1;
+    text-align: center;
+    padding: 15px;
+    border-radius: 10px;
+    background: #f7fafc;
+    transition: all 0.3s ease;
+}
+
+.team.winner {
+    background: #e8f5e8;
+    border: 2px solid #38a169;
+}
+
+.team h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.team .score {
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.vs {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+    margin: 0 20px;
+}
+
+.match-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.match-info p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.status-scheduled {
+    color: #d69e2e;
+    font-weight: 600;
+}
+
+.status-confirmed {
+    color: #38a169;
+    font-weight: 600;
+}
+
+.status-pending {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.match-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.venue-proposal {
+    background: #f7fafc;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.venue-proposal p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.proposal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background: #38a169;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #2f855a;
+    transform: translateY(-1px);
+}
+
+.btn-warning {
+    background: #f6ad55;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #ed8936;
+    transform: translateY(-1px);
+}
+
+.status-disputed {
+    color: #e53e3e;
+    font-weight: bold;
+}
+
+.score-approval {
+    background: #f7fafc;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.score-approval p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.approval-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.score-waiting {
+    background: #fef5e7;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.score-waiting p {
+    color: #d69e2e;
+    font-size: 14px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.no-matches {
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.no-matches i {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.no-matches h3 {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.no-matches p {
+    color: #999;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .match-teams {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .vs {
+        margin: 10px 0;
+    }
+    
+    .match-details {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .match-actions {
+        width: 100%;
+    }
+    
+    .proposal-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %} 
