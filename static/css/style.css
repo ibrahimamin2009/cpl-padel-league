@@ -72,6 +72,10 @@ body {
     display: none;
 }
 
+.desktop-only {
+    display: block;
+}
+
 .btn-logout {
     background: #e53e3e;
     color: white;
@@ -746,6 +750,11 @@ body {
         margin-left: auto;
     }
     
+    /* Hide desktop nav user on mobile */
+    .desktop-only {
+        display: none;
+    }
+    
     /* Mobile Navigation */
     .mobile-nav-toggle {
         display: block;
@@ -758,6 +767,31 @@ body {
         margin-left: 15px;
         min-height: 44px;
         min-width: 44px;
+    }
+    
+    /* Mobile user info */
+    .nav-user-mobile {
+        border-top: 1px solid rgba(102, 126, 234, 0.2);
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+    
+    .nav-user-mobile .user-name {
+        display: block;
+        color: #667eea;
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .logout-link {
+        background: rgba(220, 53, 69, 0.1) !important;
+        color: #dc3545 !important;
+    }
+    
+    .logout-link:hover {
+        background: rgba(220, 53, 69, 0.2) !important;
     }
     
     .nav-menu.mobile-active {

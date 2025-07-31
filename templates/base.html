@@ -30,8 +30,16 @@
                 {% if current_user and current_user.is_admin %}
                 <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link">Admin</a></li>
                 {% endif %}
+                {% if current_user %}
+                <li class="nav-user-mobile">
+                    <span class="user-name">{{ current_user.team_name }}</span>
+                    <a href="{{ url_for('logout') }}" class="nav-link logout-link">Logout</a>
+                </li>
+                {% else %}
+                <li><a href="{{ url_for('login') }}" class="nav-link">Sign In</a></li>
+                {% endif %}
             </ul>
-            <div class="nav-user">
+            <div class="nav-user desktop-only">
                 {% if current_user %}
                 <span>{{ current_user.team_name }}</span>
                 <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
