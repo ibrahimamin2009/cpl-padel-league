@@ -1,4 +1,4 @@
-# 🚀 CPL Deployment Guide - Free Options
+# 🚀 CPL Padel League Deployment Guide - Free Options
 
 ## 🆓 **Railway (Recommended - Easiest)**
 

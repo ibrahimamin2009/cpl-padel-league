@@ -1,6 +1,6 @@
-# 🏓 CPL - Competitive Pickleball League
+# 🏓 CPL - Competitive Padel League
 
-A comprehensive web application for managing competitive pickleball leagues with automatic time limits, forfeit handling, and tier-based rankings.
+A comprehensive web application for managing competitive padel leagues with automatic time limits, forfeit handling, and tier-based rankings.
 
 ## ✨ Features
 
