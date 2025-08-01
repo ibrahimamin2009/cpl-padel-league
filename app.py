@@ -23,7 +23,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-pr
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Database configuration
-if os.getenv('RENDER_ENVIRONMENT'):
+if os.getenv('VERCEL_ENVIRONMENT'):
+    # Vercel - use SQLite (no external database needed)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
+elif os.getenv('RENDER_ENVIRONMENT'):
     # Render PostgreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 elif os.getenv('RAILWAY_ENVIRONMENT'):
