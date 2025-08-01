@@ -23,17 +23,13 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-pr
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Database configuration
-if os.getenv('DATABASE_URL'):
-    # Production database (Railway)
+if os.getenv('RENDER_ENVIRONMENT'):
+    # Render PostgreSQL
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    # Fix for Railway PostgreSQL URLs
-    if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
-        app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
 elif os.getenv('RAILWAY_ENVIRONMENT'):
-    # Force PostgreSQL on Railway even if DATABASE_URL is not set
     app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:EYUEkYWjVWzeFkqATysKdjZqXoonoBTm@metro.proxy.rlwy.net:59634/railway"
 else:
-    # Development database (SQLite)
+    # Local SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
 
 # Email configuration
@@ -2327,6 +2323,33 @@ def send_scheduled_reminders():
     
     for match in played_matches:
         send_score_reminder_notification(match)
+
+# Initialize database and admin account for Render
+if os.getenv('RENDER_ENVIRONMENT'):
+    with app.app_context():
+        try:
+            db.create_all()
+            # Create admin account if it doesn't exist
+            admin_user = User.query.filter_by(team_name="admin").first()
+            if not admin_user:
+                admin_user = User(
+                    team_name="admin",
+                    player1_name="Admin",
+                    player1_email="admin@cpl.com",
+                    player2_name="Admin",
+                    player2_email="admin@cpl.com",
+                    password_hash=generate_password_hash("admin"),
+                    is_admin=True,
+                    rank=0,
+                    tier="Admin",
+                    status="active",
+                    created_at=datetime.now(LAHORE_TZ)
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+                print("✅ Render: Admin account created!")
+        except Exception as e:
+            print(f"⚠️ Render: Database init error: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
