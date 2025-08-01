@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app_minimal_vercel.py",
+      "src": "app_vercel_simple.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
@@ -13,7 +13,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app_minimal_vercel.py"
+      "dest": "app_vercel_simple.py"
     }
   ],
   "env": {
@@ -21,7 +21,7 @@
     "VERCEL_ENVIRONMENT": "production"
   },
   "functions": {
-    "app_minimal_vercel.py": {
+    "app_vercel_simple.py": {
       "maxDuration": 30
     }
   }
