@@ -22,18 +22,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Database configuration
-if os.getenv('VERCEL_ENVIRONMENT'):
-    # Vercel - use SQLite (no external database needed)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
-elif os.getenv('RENDER_ENVIRONMENT'):
-    # Render PostgreSQL
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-elif os.getenv('RAILWAY_ENVIRONMENT'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:EYUEkYWjVWzeFkqATysKdjZqXoonoBTm@metro.proxy.rlwy.net:59634/railway"
-else:
-    # Local SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
+# Database configuration - Use SQLite for all deployments (simpler and more reliable)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
 
 # Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
