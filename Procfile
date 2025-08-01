@@ -1,1 +1,1 @@
-web: gunicorn app_minimal:app 
+web: gunicorn app_railway_fixed:app 
