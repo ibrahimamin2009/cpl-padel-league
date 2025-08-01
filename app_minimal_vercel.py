@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+Ultra-minimal Flask app for Vercel serverless deployment
+Updated: 2025-08-01 - Force redeploy
+"""
 import os
 import sys
 from datetime import datetime, timedelta
