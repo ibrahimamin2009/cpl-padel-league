@@ -19,10 +19,5 @@
   "env": {
     "PYTHONPATH": ".",
     "VERCEL_ENVIRONMENT": "production"
-  },
-  "functions": {
-    "app_vercel_simple.py": {
-      "maxDuration": 30
-    }
   }
 } 
