@@ -22,8 +22,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Database configuration - Use SQLite for all deployments (simpler and more reliable)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
+# Database configuration - Use in-memory SQLite for Vercel serverless
+if os.getenv('VERCEL_ENVIRONMENT'):
+    # Vercel serverless - use in-memory database
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+else:
+    # Local development - use file-based database
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cpl.db'
 
 # Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -2317,11 +2322,13 @@ def send_scheduled_reminders():
     for match in played_matches:
         send_score_reminder_notification(match)
 
-# Initialize database and admin account for Render
-if os.getenv('RENDER_ENVIRONMENT'):
+# Initialize database and admin account for Vercel serverless
+if os.getenv('VERCEL_ENVIRONMENT'):
     with app.app_context():
         try:
+            # Create all tables (needed for each serverless invocation)
             db.create_all()
+            
             # Create admin account if it doesn't exist
             admin_user = User.query.filter_by(team_name="admin").first()
             if not admin_user:
@@ -2340,9 +2347,20 @@ if os.getenv('RENDER_ENVIRONMENT'):
                 )
                 db.session.add(admin_user)
                 db.session.commit()
-                print("✅ Render: Admin account created!")
+                print("✅ Vercel: Admin account created!")
         except Exception as e:
-            print(f"⚠️ Render: Database init error: {e}")
+            print(f"⚠️ Vercel: Database init error: {e}")
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors gracefully"""
+    db.session.rollback()
+    return render_template('error.html', error="Internal server error. Please try again."), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors"""
+    return render_template('error.html', error="Page not found."), 404
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))

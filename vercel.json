@@ -17,6 +17,12 @@
     }
   ],
   "env": {
-    "PYTHONPATH": "."
+    "PYTHONPATH": ".",
+    "VERCEL_ENVIRONMENT": "production"
+  },
+  "functions": {
+    "app.py": {
+      "maxDuration": 30
+    }
   }
 } 

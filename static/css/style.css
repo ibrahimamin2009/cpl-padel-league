@@ -1748,3 +1748,22 @@ body {
         font-size: 2em;
     }
 } 
+
+/* Error page styles */
+.error-page {
+    text-align: center;
+    padding: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.error-page h1 {
+    color: #e74c3c;
+    margin-bottom: 1rem;
+}
+
+.error-page p {
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+} 
