@@ -542,65 +542,65 @@ def dashboard():
         demoted_teams = check_forfeit_demotions()
         
         if current_user:
-            # User-specific dashboard
-            matches_played = Match.query.filter(
-                ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id)) &
-                (Match.status == 'confirmed')
-            ).count()
+        # User-specific dashboard
+        matches_played = Match.query.filter(
+            ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id)) &
+            (Match.status == 'confirmed')
+        ).count()
+        
+        matches_won = Match.query.filter(
+            (Match.winner_id == current_user.id) & (Match.status == 'confirmed')
+        ).count()
+        
+        win_percentage = (matches_won / matches_played * 100) if matches_played > 0 else 0
+        
+        # Get recent matches for this team
+        recent_matches = Match.query.filter(
+            ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id))
+        ).order_by(Match.created_at.desc()).limit(5).all()
+        
+        # Get pending challenges for this team
+        pending_challenges = Challenge.query.filter(
+            (Challenge.challenged_team_id == current_user.id) & (Challenge.status == 'pending')
+        ).all()
+        
+        # Calculate display rank for current user (only for non-admin users)
+        display_rank = None
+        if not current_user.is_admin:
+            all_teams = User.query.filter(
+                (User.status == 'active') & 
+                (User.is_admin == False)
+            ).order_by(User.rank).all()
             
-            matches_won = Match.query.filter(
-                (Match.winner_id == current_user.id) & (Match.status == 'confirmed')
-            ).count()
-            
-            win_percentage = (matches_won / matches_played * 100) if matches_played > 0 else 0
-            
-            # Get recent matches for this team
-            recent_matches = Match.query.filter(
-                ((Match.team1_id == current_user.id) | (Match.team2_id == current_user.id))
-            ).order_by(Match.created_at.desc()).limit(5).all()
-            
-            # Get pending challenges for this team
-            pending_challenges = Challenge.query.filter(
-                (Challenge.challenged_team_id == current_user.id) & (Challenge.status == 'pending')
-            ).all()
-            
-            # Calculate display rank for current user (only for non-admin users)
-            display_rank = None
-            if not current_user.is_admin:
-                all_teams = User.query.filter(
-                    (User.status == 'active') & 
-                    (User.is_admin == False)
-                ).order_by(User.rank).all()
-                
-                for i, team in enumerate(all_teams, 1):
-                    if team.id == current_user.id:
-                        display_rank = i
-                        break
-            
-            return render_template('dashboard.html', 
-                                 current_user=current_user,
-                                 display_rank=display_rank,
-                                 matches_played=matches_played,
-                                 matches_won=matches_won,
-                                 win_percentage=win_percentage,
-                                 recent_matches=recent_matches,
-                                 pending_challenges=pending_challenges)
-        else:
-            # Public dashboard
+            for i, team in enumerate(all_teams, 1):
+                if team.id == current_user.id:
+                    display_rank = i
+                    break
+        
+        return render_template('dashboard.html', 
+                             current_user=current_user,
+                             display_rank=display_rank,
+                             matches_played=matches_played,
+                             matches_won=matches_won,
+                             win_percentage=win_percentage,
+                             recent_matches=recent_matches,
+                             pending_challenges=pending_challenges)
+    else:
+        # Public dashboard
             total_teams = User.query.filter(User.is_admin == False).count()
             active_teams = User.query.filter(
                 (User.status == 'active') & 
                 (User.is_admin == False)
             ).count()
-            recent_matches = Match.query.order_by(Match.created_at.desc()).limit(5).all()
-            pending_challenges = Challenge.query.filter_by(status='pending').all()
-            
-            return render_template('dashboard.html', 
-                                 current_user=None,
-                                 total_teams=total_teams,
-                                 active_teams=active_teams,
-                                 recent_matches=recent_matches,
-                                 pending_challenges=pending_challenges)
+        recent_matches = Match.query.order_by(Match.created_at.desc()).limit(5).all()
+        pending_challenges = Challenge.query.filter_by(status='pending').all()
+        
+        return render_template('dashboard.html', 
+                             current_user=None,
+                             total_teams=total_teams,
+                             active_teams=active_teams,
+                             recent_matches=recent_matches,
+                             pending_challenges=pending_challenges)
     except Exception as e:
         flash(f'Error loading dashboard: {str(e)}', 'error')
         return redirect(url_for('index'))
@@ -882,10 +882,10 @@ def respond_to_challenge(challenge_id, action):
         
         # Send email notification
         send_challenge_response_notification(challenge, 'rejected')
-        
+    
         flash('Challenge rejected. This counts as a forfeit and ladder has been updated.', 'warning')
-        db.session.commit()
-        return redirect(url_for('challenge'))
+    db.session.commit()
+    return redirect(url_for('challenge'))
 
 @app.route('/match/<int:match_id>/venue', methods=['GET', 'POST'])
 def propose_venue(match_id):
