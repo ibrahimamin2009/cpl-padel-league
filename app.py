@@ -587,11 +587,11 @@ def dashboard():
                              pending_challenges=pending_challenges)
     else:
         # Public dashboard
-            total_teams = User.query.filter(User.is_admin == False).count()
-            active_teams = User.query.filter(
-                (User.status == 'active') & 
-                (User.is_admin == False)
-            ).count()
+        total_teams = User.query.filter(User.is_admin == False).count()
+        active_teams = User.query.filter(
+            (User.status == 'active') & 
+            (User.is_admin == False)
+        ).count()
         recent_matches = Match.query.order_by(Match.created_at.desc()).limit(5).all()
         pending_challenges = Challenge.query.filter_by(status='pending').all()
         
