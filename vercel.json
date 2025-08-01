@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app_vercel_simple.py",
+      "src": "app_supabase.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
@@ -13,7 +13,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app_vercel_simple.py"
+      "dest": "app_supabase.py"
     }
   ],
   "env": {
