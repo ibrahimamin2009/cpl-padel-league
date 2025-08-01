@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "test_vercel.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "test_vercel.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": ".",
+    "VERCEL_ENVIRONMENT": "production"
+  },
+  "functions": {
+    "test_vercel.py": {
+      "maxDuration": 30
+    }
+  }
+} 
